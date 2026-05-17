@@ -11,6 +11,7 @@ public class GridManager : MonoBehaviour
 
     [Header("Prefabs")]
     [SerializeField] private TileView tilePrefab;
+    [SerializeField] private TileArtSet tileArtSet;
 
     [Header("References")]
     [SerializeField] private Transform gridRoot;
@@ -50,9 +51,17 @@ public class GridManager : MonoBehaviour
                 Vector2Int gridPos = new Vector2Int(x, y);
                 Vector3 worldPos = GridToWorld(gridPos);
 
+                bool isPathCell = IsPathCell(gridPos);
+                Sprite sprite = null;
+
+                if (isPathCell && tileArtSet != null && tileArtSet.pathTile != null)
+                    sprite = tileArtSet.pathTile;
+                else if (tileArtSet != null)
+                    sprite = tileArtSet.GetGroundTile(gridPos);
+
                 TileView tile = Instantiate(tilePrefab, worldPos, Quaternion.identity, gridRoot);
                 tile.name = $"Tile_{x}_{y}";
-                tile.Initialize(gridPos, false);
+                tile.Initialize(gridPos, sprite, isPathCell);
 
                 tiles.Add(gridPos, tile);
             }
@@ -61,14 +70,19 @@ public class GridManager : MonoBehaviour
 
     public void ApplyPathToGrid()
     {
-        if (pathManager == null)
+        if (pathManager == null || tiles == null || tiles.Count == 0)
             return;
 
         foreach (Vector2Int pathCell in pathManager.PathCells)
         {
-            if (tiles.TryGetValue(pathCell, out TileView tile))
+            if (!tiles.TryGetValue(pathCell, out TileView tileView) || tileView == null)
+                continue;
+
+            tileView.SetPath(true);
+
+            if (tileArtSet != null && tileArtSet.pathTile != null)
             {
-                tile.SetPath(true);
+                tileView.SetSprite(tileArtSet.pathTile);
             }
         }
     }
