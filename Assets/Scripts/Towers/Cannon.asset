@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6aaec34e237369478b601c1ae333b9c, type: 3}
   m_Name: Cannon
   m_EditorClassIdentifier: Assembly-CSharp::TowerData
-  towerName: Archer
+  towerName: Cannon
   cost: 200
   range: 5
   cooldown: 2
@@ -24,5 +24,5 @@ MonoBehaviour:
   slowMultiplier: 0.5
   slowDuration: 1.5
   icon: {fileID: -6809907661698028246, guid: 5221a23cfb7e85945a01f3b9d550ecf4, type: 3}
-  towerPrefab: {fileID: 5898920505662511207, guid: e2cf64b24f527cf4d82f8b695ae59a07, type: 3}
+  towerPrefab: {fileID: 8539958626567370805, guid: 3d53411b7f4ceee469e410190c85ff21, type: 3}
   projectilePrefab: {fileID: 9206680111735461324, guid: cd1d07766d0a24a4eb042893871d40be, type: 3}

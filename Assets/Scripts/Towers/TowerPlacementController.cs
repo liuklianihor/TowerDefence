@@ -18,6 +18,14 @@ public class TowerPlacementController : MonoBehaviour
     [Header("Input")]
     [SerializeField] private bool ignoreClicksOverUI = true;
 
+    private struct PlacedTowerInfo
+    {
+        public Vector2Int cell;
+        public TowerBase tower;
+        public int cost;
+    }
+
+    private readonly Dictionary<Vector2Int, PlacedTowerInfo> placedTowers = new Dictionary<Vector2Int, PlacedTowerInfo>();
     private readonly HashSet<Vector2Int> occupiedCells = new HashSet<Vector2Int>();
 
     public TowerData SelectedTower { get; private set; }
@@ -72,6 +80,7 @@ public class TowerPlacementController : MonoBehaviour
     public bool TryPlaceTowerAtMouse()
     {
         TowerData towerData = ActiveTowerData;
+
         if (towerData == null || worldCamera == null || gridManager == null || towerData.towerPrefab == null)
             return false;
 
@@ -103,15 +112,24 @@ public class TowerPlacementController : MonoBehaviour
             return false;
 
         Vector3 worldPos = gridManager.GridToWorld(cell);
+
         TowerBase tower = Instantiate(
-            towerData.towerPrefab
-            ,worldPos
-            ,Quaternion.identity
-            ,towerRoot
+            towerData.towerPrefab,
+            worldPos,
+            Quaternion.identity,
+            towerRoot
         );
+
         tower.Initialize(towerData);
 
         occupiedCells.Add(cell);
+        placedTowers[cell] = new PlacedTowerInfo
+        {
+            cell = cell,
+            tower = tower,
+            cost = towerData.cost
+        };
+
         return true;
     }
 
@@ -135,16 +153,33 @@ public class TowerPlacementController : MonoBehaviour
         return true;
     }
 
-    public void ClearPlacedTowers()
+    public bool ClearPlacedTowersAndRefund()
     {
+        if (gameStateManager != null && gameStateManager.CurrentPhase != GamePhase.Preparation)
+            return false;
+
+        int refund = 0;
+
+        foreach (PlacedTowerInfo info in placedTowers.Values)
+        {
+            if (info.tower != null)
+                Destroy(info.tower.gameObject);
+
+            refund += Mathf.Max(0, info.cost);
+        }
+
+        placedTowers.Clear();
         occupiedCells.Clear();
 
-        if (towerRoot == null)
-            return;
+        if (economy != null && refund > 0)
+            economy.AddGold(refund);
 
-        for (int i = towerRoot.childCount - 1; i >= 0; i--)
-        {
-            Destroy(towerRoot.GetChild(i).gameObject);
-        }
+        SelectedTower = defaultTower;
+        return true;
+    }
+
+    public void ClearPlacedTowers()
+    {
+        ClearPlacedTowersAndRefund();
     }
 }

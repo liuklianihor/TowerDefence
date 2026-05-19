@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6aaec34e237369478b601c1ae333b9c, type: 3}
   m_Name: Freezer
   m_EditorClassIdentifier: Assembly-CSharp::TowerData
-  towerName: Archer
+  towerName: Freezer
   cost: 120
   range: 3
   cooldown: 1
@@ -24,5 +24,5 @@ MonoBehaviour:
   slowMultiplier: 0.5
   slowDuration: 2
   icon: {fileID: 1598061926268173818, guid: f202e235ded87b34493090872dffe7ec, type: 3}
-  towerPrefab: {fileID: 5140831978667814448, guid: 878f81fe03288354eafb3c1d5a4d6868, type: 3}
+  towerPrefab: {fileID: 7162015574582431848, guid: 878f81fe03288354eafb3c1d5a4d6868, type: 3}
   projectilePrefab: {fileID: 9206680111735461324, guid: cd1d07766d0a24a4eb042893871d40be, type: 3}

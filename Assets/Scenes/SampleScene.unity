@@ -1094,7 +1094,6 @@ MonoBehaviour:
   gridManager: {fileID: 2119273498}
   economy: {fileID: 557681376}
   gameStateManager: {fileID: 557681377}
-  towerPrefab: {fileID: 1521221187}
   defaultTower: {fileID: 11400000, guid: 6376b0abf8d30204c8c3bb0ca1b733b8, type: 2}
   towerRoot: {fileID: 794704223}
   ignoreClicksOverUI: 1
@@ -3040,6 +3039,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameHUD
   gameStateManager: {fileID: 557681377}
   economy: {fileID: 557681376}
+  towerPlacementController: {fileID: 557681373}
   baseHealthComponent: {fileID: 380683931}
   goldText: {fileID: 1917182825}
   attackBudgetText: {fileID: 0}
@@ -3049,6 +3049,7 @@ MonoBehaviour:
   gameOverText: {fileID: 0}
   startBattleButton: {fileID: 743726689}
   restartButton: {fileID: 138554057}
+  clearSelectionButton: {fileID: 519542716}
   gameOverPanel: {fileID: 1375385352}
 --- !u!4 &1347029862
 Transform:
@@ -3187,17 +3188,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1375385352}
   m_CullTransparentMesh: 1
---- !u!114 &1521221187 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7077324161690391134, guid: 28ceb027ddcc3b94e83933982eec94b1, type: 3}
-  m_PrefabInstance: {fileID: 2270036982028592219}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0006fabec87085d4f9f0bf0c482dff1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBase
 --- !u!1 &1612530836
 GameObject:
   m_ObjectHideFlags: 0
@@ -4423,6 +4413,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7178362370461113350, guid: 31b8292d45a471a4886fedb079026882, type: 3}
       propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7178362370461113350, guid: 31b8292d45a471a4886fedb079026882, type: 3}
+      propertyPath: m_SortingOrder
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7178362370461113350, guid: 31b8292d45a471a4886fedb079026882, type: 3}

@@ -10,6 +10,7 @@ public class GameHUD : MonoBehaviour
     [Header("Managers")]
     [SerializeField] private GameStateManager gameStateManager;
     [SerializeField] private GameEconomy economy;
+    [SerializeField] private TowerPlacementController towerPlacementController;
 
     [Tooltip("BaseHealth")]
     [SerializeField] private Component baseHealthComponent;
@@ -25,6 +26,7 @@ public class GameHUD : MonoBehaviour
     [Header("Buttons")]
     [SerializeField] private Button startBattleButton;
     [SerializeField] private Button restartButton;
+    [SerializeField] private Button clearSelectionButton;
 
     [Header("Optional Panels")]
     [SerializeField] private GameObject gameOverPanel;
@@ -70,6 +72,9 @@ public class GameHUD : MonoBehaviour
         if (economy == null)
             economy = FindFirstObjectByType<GameEconomy>();
 
+        if (towerPlacementController == null)
+            towerPlacementController = FindFirstObjectByType<TowerPlacementController>();
+
         if (baseHealthComponent == null)
             baseHealthComponent = FindFirstObjectByType<MonoBehaviour>(FindObjectsInactive.Include);
 
@@ -112,6 +117,12 @@ public class GameHUD : MonoBehaviour
         {
             restartButton.onClick.RemoveListener(OnRestartPressed);
             restartButton.onClick.AddListener(OnRestartPressed);
+        }
+
+        if (clearSelectionButton != null)
+        {
+            clearSelectionButton.onClick.RemoveListener(OnClearSelectionPressed);
+            clearSelectionButton.onClick.AddListener(OnClearSelectionPressed);
         }
     }
 
@@ -261,5 +272,13 @@ public class GameHUD : MonoBehaviour
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    public void OnClearSelectionPressed()
+    {
+        if (towerPlacementController != null)
+            towerPlacementController.ClearPlacedTowersAndRefund();
+
+        RefreshAll();
     }
 }
