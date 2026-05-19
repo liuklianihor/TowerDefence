@@ -83,7 +83,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 15
   m_MaskInteraction: 0
   m_Sprite: {fileID: 6577163735709190383, guid: cfc0a0b5e33c63848ad873961364f2d5, type: 3}
   m_Color: {r: 0.14509805, g: 0.7529412, b: 0.34901962, a: 1}
@@ -108,6 +108,7 @@ GameObject:
   - component: {fileID: 6549821912586869449}
   - component: {fileID: 7178362370461113350}
   - component: {fileID: 6842546441315807132}
+  - component: {fileID: 2046769534333861326}
   m_Layer: 0
   m_Name: EnemyPrefab
   m_TagString: Untagged
@@ -143,7 +144,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec43a38d09ff4ac4796a2f42e4352945, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
-  moveSpeed: 2
+  moveSpeed: 10
+  spriteRenderer: {fileID: 0}
 --- !u!114 &6549821912586869449
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -156,7 +158,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79eb691e99c77114e85980f3076430ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  maxHP: 10
+  enemyDefinition: {fileID: 0}
+  maxHP: 300
 --- !u!212 &7178362370461113350
 SpriteRenderer:
   serializedVersion: 2
@@ -204,7 +207,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 10
   m_MaskInteraction: 0
   m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -230,6 +233,42 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyTarget
   movement: {fileID: 300566995947709052}
   health: {fileID: 6549821912586869449}
+--- !u!58 &2046769534333861326
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4976099318046384748}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.5
 --- !u!1 &8029184083491254868
 GameObject:
   m_ObjectHideFlags: 0

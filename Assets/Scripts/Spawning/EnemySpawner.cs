@@ -8,7 +8,7 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private PathManager pathManager;
     [SerializeField] private BaseHealth baseHealth;
 
-    [Header("Enemy Prefab")]
+    [Header("Fallback Enemy Prefab")]
     [SerializeField] private EnemyMovement enemyPrefab;
     [SerializeField] private Transform spawnPoint;
 
@@ -71,13 +71,29 @@ public class EnemySpawner : MonoBehaviour
 
     private void SpawnNextFromQueue()
     {
-        if (enemyPrefab == null || pathManager == null || baseHealth == null || spawnPoint == null)
+        if (pathManager == null || baseHealth == null || spawnPoint == null || ObjectPool.Instance == null)
             return;
 
         EnemySpawnEntry entry = queue.Dequeue();
 
+        if (entry == null || entry.Enemy == null)
+            return;
+
+        GameObject prefabToSpawn = null;
+
+        if (entry.Enemy.enemyPrefab != null)
+            prefabToSpawn = entry.Enemy.enemyPrefab;
+        else if (enemyPrefab != null)
+            prefabToSpawn = enemyPrefab.gameObject;
+
+        if (prefabToSpawn == null)
+        {
+            Debug.LogError($"EnemySpawner: no prefab assigned for enemy '{entry.Enemy.name}'.");
+            return;
+        }
+
         GameObject enemyObject = ObjectPool.Instance.Get(
-            enemyPrefab.gameObject,
+            prefabToSpawn,
             spawnPoint.position,
             Quaternion.identity
         );
@@ -86,7 +102,13 @@ public class EnemySpawner : MonoBehaviour
             return;
 
         EnemyMovement enemy = enemyObject.GetComponent<EnemyMovement>();
+
+        if (enemy == null)
+            enemy = enemyObject.GetComponentInChildren<EnemyMovement>();
+
         if (enemy != null)
             enemy.Initialize(pathManager, baseHealth, entry.Enemy);
+        else
+            Debug.LogError($"EnemySpawner: prefab '{prefabToSpawn.name}' does not contain EnemyMovement.");
     }
 }

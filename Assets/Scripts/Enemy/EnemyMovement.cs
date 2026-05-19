@@ -4,7 +4,8 @@ public class EnemyMovement : MonoBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 2f;
-
+    
+    [SerializeField] private SpriteRenderer spriteRenderer;
     private PathManager pathManager;
     private BaseHealth baseHealth;
     private EnemyHealth enemyHealth;
@@ -23,6 +24,9 @@ public class EnemyMovement : MonoBehaviour
 
     private void Awake()
     {
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponent<SpriteRenderer>();
+
         enemyHealth = GetComponent<EnemyHealth>();
 
         if (enemyHealth != null)
@@ -55,8 +59,13 @@ public class EnemyMovement : MonoBehaviour
         {
             moveSpeed = enemyDefinition.moveSpeed;
 
+            if (spriteRenderer != null && enemyDefinition.sprite != null)
+            {
+                spriteRenderer.sprite = enemyDefinition.sprite;
+            }
+
             if (enemyHealth != null)
-                enemyHealth.Initialize(enemyDefinition.maxHP);
+                enemyHealth.Initialize(enemyDefinition);
         }
         else if (enemyHealth != null)
         {

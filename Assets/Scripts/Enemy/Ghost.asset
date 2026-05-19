@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: Ghost
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   enemyKind: 2
-  maxHP: 18
+  maxHP: 150
   moveSpeed: 2.2
   baseDamage: 1
   cost: 20
   goldReward: 10
   ignoresFreezer: 1
-  icon: {fileID: -5899927303015767666, guid: 11bde662b44cf154eb70d24679ae3278, type: 3}
+  sprite: {fileID: -5899927303015767666, guid: 11bde662b44cf154eb70d24679ae3278, type: 3}
   enemyPrefab: {fileID: 4976099318046384748, guid: 31b8292d45a471a4886fedb079026882, type: 3}

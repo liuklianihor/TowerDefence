@@ -18,7 +18,7 @@ public class EnemyDefinition : ScriptableObject
     public bool ignoresFreezer = false;
 
     [Header("Visuals")]
-    public Sprite icon;
+    [SerializeField] public Sprite sprite;
     public GameObject enemyPrefab;
 }
 
