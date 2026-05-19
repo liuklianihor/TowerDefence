@@ -13,16 +13,16 @@ MonoBehaviour:
   m_Name: Mage
   m_EditorClassIdentifier: Assembly-CSharp::TowerData
   towerName: Mage
-  cost: 100
-  range: 3
-  cooldown: 1
-  damage: 1
+  cost: 150
+  range: 2.5
+  cooldown: 1.2
+  damage: 20
   projectileSpeed: 8
   attackMode: 1
   targetMode: 0
-  splashRadius: 0
+  splashRadius: 1.5
   slowMultiplier: 0.5
   slowDuration: 1.5
   icon: {fileID: -7285376162372006033, guid: ffda2d8aca6990d4282421645050bf43, type: 3}
-  towerPrefab: {fileID: 4089937791516818690, guid: 0df9bb1743464e148877d56604fafe70, type: 3}
+  towerPrefab: {fileID: 7470549809525210037, guid: 3d53411b7f4ceee469e410190c85ff21, type: 3}
   projectilePrefab: {fileID: 9206680111735461324, guid: cd1d07766d0a24a4eb042893871d40be, type: 3}

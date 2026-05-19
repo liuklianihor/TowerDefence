@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerData
   towerName: Archer
   cost: 100
-  range: 3
-  cooldown: 1
-  damage: 1
+  range: 3.5
+  cooldown: 0.7
+  damage: 15
   projectileSpeed: 8
   attackMode: 0
   targetMode: 0
@@ -24,5 +24,5 @@ MonoBehaviour:
   slowMultiplier: 0.5
   slowDuration: 1.5
   icon: {fileID: -7132172409892320828, guid: c0a92499f8cd3024a9db1b891da5d08d, type: 3}
-  towerPrefab: {fileID: 4089937791516818690, guid: 0df9bb1743464e148877d56604fafe70, type: 3}
+  towerPrefab: {fileID: 4089937791516818690, guid: 28ceb027ddcc3b94e83933982eec94b1, type: 3}
   projectilePrefab: {fileID: 9206680111735461324, guid: cd1d07766d0a24a4eb042893871d40be, type: 3}

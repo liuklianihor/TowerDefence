@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class GameHUD : MonoBehaviour
@@ -37,7 +38,6 @@ public class GameHUD : MonoBehaviour
     {
         ResolveReferences();
         CacheBaseHealthReflection();
-
         WireButtons();
     }
 
@@ -83,14 +83,9 @@ public class GameHUD : MonoBehaviour
 
         Type t = baseHealthInstance.GetType();
 
-        baseCurrentHpProp = GetFirstProperty(t,
-            "CurrentHP", "CurrentHealth", "HP", "Health");
-
-        baseMaxHpProp = GetFirstProperty(t,
-            "MaxHP", "MaxHealth", "TotalHP", "HealthMax", "HPMax");
-
-        baseIsDestroyedProp = GetFirstProperty(t,
-            "IsDestroyed", "Destroyed", "IsDead");
+        baseCurrentHpProp = GetFirstProperty(t, "CurrentHP", "CurrentHealth", "HP", "Health");
+        baseMaxHpProp = GetFirstProperty(t, "MaxHP", "MaxHealth", "TotalHP", "HealthMax", "HPMax");
+        baseIsDestroyedProp = GetFirstProperty(t, "IsDestroyed", "Destroyed", "IsDead");
     }
 
     private PropertyInfo GetFirstProperty(Type type, params string[] names)
@@ -222,10 +217,7 @@ public class GameHUD : MonoBehaviour
 
         if (destroyed)
         {
-            if (maxHp > 0)
-                baseHpText.text = $"Base HP: 0/{maxHp}";
-            else
-                baseHpText.text = "Base HP: 0";
+            baseHpText.text = maxHp > 0 ? $"Base HP: 0/{maxHp}" : "Base HP: 0";
             return;
         }
 
@@ -267,7 +259,7 @@ public class GameHUD : MonoBehaviour
 
     public void OnRestartPressed()
     {
-        if (gameStateManager != null)
-            gameStateManager.StartNewGame();
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

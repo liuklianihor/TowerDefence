@@ -25,6 +25,6 @@ public class TowerData : ScriptableObject
 
     [Header("Visuals")]
     public Sprite icon;
-    public GameObject towerPrefab;
+    public TowerBase towerPrefab;
     public GameObject projectilePrefab;
 }

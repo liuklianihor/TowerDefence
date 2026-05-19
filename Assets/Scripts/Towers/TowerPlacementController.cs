@@ -1,6 +1,7 @@
-using UnityEngine.InputSystem;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
 public class TowerPlacementController : MonoBehaviour
 {
@@ -11,82 +12,136 @@ public class TowerPlacementController : MonoBehaviour
     [SerializeField] private GameStateManager gameStateManager;
 
     [Header("Tower")]
-    [SerializeField] private TowerBase towerPrefab;
     [SerializeField] private TowerData defaultTower;
     [SerializeField] private Transform towerRoot;
 
-    private readonly HashSet<Vector2Int> occupiedCells = new();
+    [Header("Input")]
+    [SerializeField] private bool ignoreClicksOverUI = true;
+
+    private readonly HashSet<Vector2Int> occupiedCells = new HashSet<Vector2Int>();
+
+    public TowerData SelectedTower { get; private set; }
+    public TowerData DefaultTower => defaultTower;
+    public TowerData ActiveTowerData => SelectedTower != null ? SelectedTower : defaultTower;
 
     private void Awake()
     {
-        if (worldCamera == null) worldCamera = Camera.main;
+        if (worldCamera == null)
+            worldCamera = Camera.main;
+
         if (towerRoot == null)
         {
-            var root = new GameObject("Towers");
-            towerRoot = root.transform;
+            GameObject existingRoot = GameObject.Find("Towers");
+            if (existingRoot == null)
+                existingRoot = new GameObject("Towers");
+
+            towerRoot = existingRoot.transform;
         }
+
+        if (SelectedTower == null)
+            SelectedTower = defaultTower;
     }
 
     private void Update()
     {
         if (gameStateManager != null && gameStateManager.CurrentPhase != GamePhase.Preparation)
-        {
             return;
-        }
 
-        if (Mouse.current == null)
-        {
+        if (Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame)
             return;
-        }
 
-        if (Mouse.current.leftButton.wasPressedThisFrame)
-        {
-            TryPlaceTowerAtMouse();
-        }
+        if (ignoreClicksOverUI && EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            return;
+
+        TryPlaceTowerAtMouse();
+    }
+
+    public void SelectTower(TowerData towerData)
+    {
+        if (towerData == null)
+            return;
+
+        SelectedTower = towerData;
+    }
+
+    public void ClearSelection()
+    {
+        SelectedTower = defaultTower;
     }
 
     public bool TryPlaceTowerAtMouse()
     {
-        if (worldCamera == null || gridManager == null || towerPrefab == null || defaultTower == null)
-        {
+        TowerData towerData = ActiveTowerData;
+        if (towerData == null || worldCamera == null || gridManager == null || towerData.towerPrefab == null)
             return false;
-        }
 
         Vector2 screenPos = Mouse.current.position.ReadValue();
-        Vector3 worldPos = worldCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, -worldCamera.transform.position.z));
+        Vector3 worldPos = worldCamera.ScreenToWorldPoint(
+            new Vector3(screenPos.x, screenPos.y, -worldCamera.transform.position.z)
+        );
         worldPos.z = 0f;
 
         Vector2Int cell = gridManager.WorldToGrid(worldPos);
-        return TryPlaceTower(cell, defaultTower);
+        return TryPlaceTower(cell, towerData);
     }
 
     public bool TryPlaceTower(Vector2Int cell, TowerData towerData)
     {
-        if (gridManager == null || towerPrefab == null || towerData == null)
-        {
+        if (gridManager == null || towerData == null || towerData.towerPrefab == null)
             return false;
-        }
 
-        if (!gridManager.IsInsideGrid(cell) || gridManager.IsPathCell(cell) || occupiedCells.Contains(cell))
-        {
+        if (!gridManager.IsInsideGrid(cell))
             return false;
-        }
+
+        if (gridManager.IsPathCell(cell))
+            return false;
+
+        if (occupiedCells.Contains(cell))
+            return false;
 
         if (economy != null && !economy.SpendGold(towerData.cost))
-        {
             return false;
-        }
 
         Vector3 worldPos = gridManager.GridToWorld(cell);
-        TowerBase tower = Instantiate(towerPrefab, worldPos, Quaternion.identity, towerRoot);
+        TowerBase tower = Instantiate(
+            towerData.towerPrefab
+            ,worldPos
+            ,Quaternion.identity
+            ,towerRoot
+        );
         tower.Initialize(towerData);
+
         occupiedCells.Add(cell);
+        return true;
+    }
+
+    public bool CanPlaceTower(Vector2Int cell, TowerData towerData)
+    {
+        if (gridManager == null || towerData == null)
+            return false;
+
+        if (!gridManager.IsInsideGrid(cell))
+            return false;
+
+        if (gridManager.IsPathCell(cell))
+            return false;
+
+        if (occupiedCells.Contains(cell))
+            return false;
+
+        if (economy != null && !economy.CanSpendGold(towerData.cost))
+            return false;
+
         return true;
     }
 
     public void ClearPlacedTowers()
     {
         occupiedCells.Clear();
+
+        if (towerRoot == null)
+            return;
+
         for (int i = towerRoot.childCount - 1; i >= 0; i--)
         {
             Destroy(towerRoot.GetChild(i).gameObject);
