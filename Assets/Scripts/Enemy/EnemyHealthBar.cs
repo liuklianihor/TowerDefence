@@ -1,38 +1,36 @@
 using UnityEngine;
-using UnityEngine.UI;
 
 public class EnemyHealthBar : MonoBehaviour
 {
-    [SerializeField] private Image fillImage;
-    [SerializeField] private Vector3 offset = new Vector3(0f, 0.6f, 0f);
+    [SerializeField] private EnemyHealth enemyHealth;
+    [SerializeField] private Transform fillTransform;
 
-    private Transform target;
-    private Camera mainCamera;
+    private Vector3 initialScale;
 
-    public void Bind(Transform targetTransform)
+    private void Awake()
     {
-        target = targetTransform;
-        mainCamera = Camera.main;
+        if (enemyHealth == null)
+            enemyHealth = GetComponentInParent<EnemyHealth>();
+
+        if (fillTransform == null)
+            fillTransform = transform;
+
+        initialScale = fillTransform.localScale;
     }
 
-    public void SetValue(float normalizedValue)
+    private void Update()
     {
-        if (fillImage != null)
-        {
-            fillImage.fillAmount = Mathf.Clamp01(normalizedValue);
-        }
-    }
-
-    private void LateUpdate()
-    {
-        if (target == null)
+        if (enemyHealth == null)
             return;
 
-        transform.position = target.position + offset;
+        float hpPercent =
+            (float)enemyHealth.CurrentHP / enemyHealth.MaxHP;
 
-        if (mainCamera != null)
-        {
-            transform.forward = mainCamera.transform.forward;
-        }
+        hpPercent = Mathf.Clamp01(hpPercent);
+
+        Vector3 scale = initialScale;
+        scale.x *= hpPercent;
+
+        fillTransform.localScale = scale;
     }
 }
