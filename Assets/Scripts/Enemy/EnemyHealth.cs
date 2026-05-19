@@ -5,12 +5,9 @@ public class EnemyHealth : MonoBehaviour
 {
     [SerializeField] private int maxHP = 10;
 
-    private int currentHP;
-    private bool isDead;
-
-    public int CurrentHP => currentHP;
+    public int CurrentHP { get; private set; }
     public int MaxHP => maxHP;
-    public bool IsDead => isDead;
+    public bool IsDead { get; private set; }
 
     public event Action<int, int> OnHealthChanged;
     public event Action<EnemyHealth> OnDied;
@@ -20,25 +17,31 @@ public class EnemyHealth : MonoBehaviour
         ResetHealth();
     }
 
+    public void Initialize(int newMaxHP)
+    {
+        maxHP = Mathf.Max(1, newMaxHP);
+        ResetHealth();
+    }
+
     public void ResetHealth()
     {
-        currentHP = maxHP;
-        isDead = false;
+        CurrentHP = maxHP;
+        IsDead = false;
         NotifyHealthChanged();
     }
 
     public void TakeDamage(int damage)
     {
-        if (isDead)
+        if (IsDead || damage <= 0)
+        {
             return;
+        }
 
-        currentHP -= damage;
-        if (currentHP < 0)
-            currentHP = 0;
-
+        CurrentHP -= damage;
+        if (CurrentHP < 0) CurrentHP = 0;
         NotifyHealthChanged();
 
-        if (currentHP <= 0)
+        if (CurrentHP <= 0)
         {
             Die();
         }
@@ -46,16 +49,15 @@ public class EnemyHealth : MonoBehaviour
 
     private void Die()
     {
-        if (isDead)
-            return;
+        if (IsDead) return;
 
-        isDead = true;
+        IsDead = true;
         OnDied?.Invoke(this);
         Destroy(gameObject);
     }
 
     private void NotifyHealthChanged()
     {
-        OnHealthChanged?.Invoke(currentHP, maxHP);
+        OnHealthChanged?.Invoke(CurrentHP, maxHP);
     }
 }

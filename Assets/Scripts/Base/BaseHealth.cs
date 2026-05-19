@@ -5,37 +5,39 @@ public class BaseHealth : MonoBehaviour
 {
     [SerializeField] private int maxHP = 20;
 
-    private int currentHP;
-    private bool isDestroyed;
-
-    public int CurrentHP => currentHP;
+    public int CurrentHP { get; private set; }
     public int MaxHP => maxHP;
-    public bool IsDestroyed => isDestroyed;
+    public bool IsDestroyed { get; private set; }
 
     public event Action<int, int> OnHealthChanged;
     public event Action OnBaseDestroyed;
 
     private void Awake()
     {
-        currentHP = maxHP;
-        isDestroyed = false;
+        ResetBase();
+    }
+
+    public void ResetBase()
+    {
+        CurrentHP = maxHP;
+        IsDestroyed = false;
         NotifyHealthChanged();
     }
 
     public void TakeDamage(int damage)
     {
-        if (isDestroyed)
+        if (IsDestroyed || damage <= 0)
+        {
             return;
+        }
 
-        currentHP -= damage;
-        if (currentHP < 0)
-            currentHP = 0;
-
+        CurrentHP -= damage;
+        if (CurrentHP < 0) CurrentHP = 0;
         NotifyHealthChanged();
 
-        if (currentHP <= 0)
+        if (CurrentHP <= 0)
         {
-            isDestroyed = true;
+            IsDestroyed = true;
             OnBaseDestroyed?.Invoke();
             Debug.Log("Base destroyed. Game Over.");
         }
@@ -43,18 +45,18 @@ public class BaseHealth : MonoBehaviour
 
     public void Heal(int amount)
     {
-        if (isDestroyed)
+        if (IsDestroyed || amount <= 0)
+        {
             return;
+        }
 
-        currentHP += amount;
-        if (currentHP > maxHP)
-            currentHP = maxHP;
-
+        CurrentHP += amount;
+        if (CurrentHP > maxHP) CurrentHP = maxHP;
         NotifyHealthChanged();
     }
 
     private void NotifyHealthChanged()
     {
-        OnHealthChanged?.Invoke(currentHP, maxHP);
+        OnHealthChanged?.Invoke(CurrentHP, maxHP);
     }
 }

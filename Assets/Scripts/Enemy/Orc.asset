@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf5303451ec6a294ba6cc5935ba5295b, type: 3}
+  m_Name: Orc
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
+  enemyKind: 1
+  maxHP: 30
+  moveSpeed: 1.5
+  baseDamage: 1
+  cost: 25
+  goldReward: 12
+  ignoresFreezer: 0
+  icon: {fileID: 3799508404887519019, guid: dd43040f55ca90e49ae9a480928b8615, type: 3}
+  enemyPrefab: {fileID: 4976099318046384748, guid: 31b8292d45a471a4886fedb079026882, type: 3}

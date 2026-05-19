@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf5303451ec6a294ba6cc5935ba5295b, type: 3}
+  m_Name: Ghost
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
+  enemyKind: 2
+  maxHP: 18
+  moveSpeed: 2.2
+  baseDamage: 1
+  cost: 20
+  goldReward: 10
+  ignoresFreezer: 1
+  icon: {fileID: -5899927303015767666, guid: 11bde662b44cf154eb70d24679ae3278, type: 3}
+  enemyPrefab: {fileID: 4976099318046384748, guid: 31b8292d45a471a4886fedb079026882, type: 3}
