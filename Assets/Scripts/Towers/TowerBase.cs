@@ -4,7 +4,6 @@ using UnityEngine;
 public class TowerBase : MonoBehaviour
 {
     [SerializeField] private TowerData towerData;
-
     private float nextAttackTime;
 
     public TowerData Data => towerData;
@@ -17,19 +16,18 @@ public class TowerBase : MonoBehaviour
 
     private void Update()
     {
-        if (towerData == null) return;
-        if (GameStateManager.Instance != null && GameStateManager.Instance.CurrentPhase != GamePhase.Battle)
-        {
+        if (towerData == null)
             return;
-        }
 
-        if (Time.time < nextAttackTime) return;
+        if (GameStateManager.Instance != null && GameStateManager.Instance.CurrentPhase != GamePhase.Battle)
+            return;
+
+        if (Time.time < nextAttackTime)
+            return;
 
         EnemyTarget target = AcquireTarget();
         if (target == null)
-        {
             return;
-        }
 
         Attack(target);
         nextAttackTime = Time.time + towerData.cooldown;
@@ -39,45 +37,47 @@ public class TowerBase : MonoBehaviour
     {
         if (towerData.attackMode == TowerAttackMode.Slow)
         {
-            if (!target.TryApplySlow(towerData.slowMultiplier, towerData.slowDuration))
+            if (target.TryApplySlow(towerData.slowMultiplier, towerData.slowDuration))
             {
-                // Ghosts ignore slow; no damage fallthrough here.
+                if (towerData.projectilePrefab != null)
+                    SpawnProjectile(target, towerData.damage, true);
+            }
+            else
+            {
+                if (towerData.projectilePrefab != null)
+                    SpawnProjectile(target, towerData.damage, true);
             }
 
-            if (towerData.projectilePrefab != null)
-            {
-                SpawnProjectile(target, towerData.damage, true);
-            }
             return;
         }
 
         if (towerData.attackMode == TowerAttackMode.Splash)
         {
             if (towerData.projectilePrefab != null)
-            {
                 SpawnProjectile(target, towerData.damage, false, towerData.splashRadius);
-            }
             else
-            {
                 ExplodeAt(target.transform.position, towerData.damage, towerData.splashRadius);
-            }
 
             return;
         }
 
         if (towerData.projectilePrefab != null)
-        {
             SpawnProjectile(target, towerData.damage, false);
-        }
         else
-        {
             target.TakeDamage(towerData.damage);
-        }
     }
 
     private void SpawnProjectile(EnemyTarget target, int damage, bool applySlow, float splashRadius = 0f)
     {
-        GameObject projectileObject = Instantiate(towerData.projectilePrefab, transform.position, Quaternion.identity);
+        GameObject projectileObject = ObjectPool.Instance.Get(
+            towerData.projectilePrefab,
+            transform.position,
+            Quaternion.identity
+        );
+
+        if (projectileObject == null)
+            return;
+
         TowerProjectile projectile = projectileObject.GetComponent<TowerProjectile>();
         if (projectile != null)
         {
@@ -99,7 +99,9 @@ public class TowerBase : MonoBehaviour
         foreach (Collider2D hit in hits)
         {
             EnemyTarget enemy = hit.GetComponent<EnemyTarget>();
-            if (enemy == null) continue;
+            if (enemy == null)
+                continue;
+
             enemy.TakeDamage(damage);
         }
     }
@@ -108,18 +110,21 @@ public class TowerBase : MonoBehaviour
     {
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, towerData.range);
         if (hits == null || hits.Length == 0)
-        {
             return null;
-        }
 
         EnemyTarget bestTarget = null;
-        float bestScore = towerData.targetMode == TowerTargetMode.Closest ? float.MaxValue : float.MinValue;
-        float bestHealthRatio = float.MaxValue;
+
+        float bestProgress = float.MinValue;
+        float bestDistance = float.MaxValue;
+        float farthestDistance = float.MinValue;
+        float strongestHealth = float.MinValue;
+        float weakestHealth = float.MaxValue;
 
         for (int i = 0; i < hits.Length; i++)
         {
             EnemyTarget enemy = hits[i].GetComponent<EnemyTarget>();
-            if (enemy == null || enemy.IsDead) continue;
+            if (enemy == null || enemy.IsDead)
+                continue;
 
             float progress = enemy.ProgressNormalized;
             float distance = Vector2.Distance(transform.position, enemy.transform.position);
@@ -128,41 +133,41 @@ public class TowerBase : MonoBehaviour
             switch (towerData.targetMode)
             {
                 case TowerTargetMode.Progress:
-                    if (progress > bestScore)
+                    if (progress > bestProgress)
                     {
-                        bestScore = progress;
+                        bestProgress = progress;
                         bestTarget = enemy;
                     }
                     break;
 
                 case TowerTargetMode.Closest:
-                    if (distance < bestScore)
+                    if (distance < bestDistance)
                     {
-                        bestScore = distance;
+                        bestDistance = distance;
                         bestTarget = enemy;
                     }
                     break;
 
                 case TowerTargetMode.Farthest:
-                    if (distance > bestScore)
+                    if (distance > farthestDistance)
                     {
-                        bestScore = distance;
+                        farthestDistance = distance;
                         bestTarget = enemy;
                     }
                     break;
 
                 case TowerTargetMode.Strongest:
-                    if (hpRatio < bestHealthRatio)
+                    if (hpRatio > strongestHealth)
                     {
-                        bestHealthRatio = hpRatio;
+                        strongestHealth = hpRatio;
                         bestTarget = enemy;
                     }
                     break;
 
                 case TowerTargetMode.Weakest:
-                    if (hpRatio > bestHealthRatio)
+                    if (hpRatio < weakestHealth)
                     {
-                        bestHealthRatio = hpRatio;
+                        weakestHealth = hpRatio;
                         bestTarget = enemy;
                     }
                     break;
@@ -184,21 +189,24 @@ public class EnemyTarget : MonoBehaviour
 
     private void Awake()
     {
-        if (movement == null) movement = GetComponent<EnemyMovement>();
-        if (health == null) health = GetComponent<EnemyHealth>();
+        if (movement == null)
+            movement = GetComponent<EnemyMovement>();
+
+        if (health == null)
+            health = GetComponent<EnemyHealth>();
     }
 
     public void TakeDamage(int amount)
     {
         if (health != null)
-        {
             health.TakeDamage(amount);
-        }
     }
 
     public bool TryApplySlow(float multiplier, float duration)
     {
-        if (movement == null) return false;
+        if (movement == null)
+            return false;
+
         return movement.ApplySlow(multiplier, duration);
     }
 }

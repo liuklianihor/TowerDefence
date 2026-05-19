@@ -10,7 +10,7 @@ public class EnemyHealth : MonoBehaviour
     public bool IsDead { get; private set; }
 
     public event Action<int, int> OnHealthChanged;
-    public event Action<EnemyHealth> OnDied;
+    public event Action OnDied;
 
     private void Awake()
     {
@@ -33,27 +33,25 @@ public class EnemyHealth : MonoBehaviour
     public void TakeDamage(int damage)
     {
         if (IsDead || damage <= 0)
-        {
             return;
-        }
 
         CurrentHP -= damage;
-        if (CurrentHP < 0) CurrentHP = 0;
+        if (CurrentHP < 0)
+            CurrentHP = 0;
+
         NotifyHealthChanged();
 
         if (CurrentHP <= 0)
-        {
             Die();
-        }
     }
 
     private void Die()
     {
-        if (IsDead) return;
+        if (IsDead)
+            return;
 
         IsDead = true;
-        OnDied?.Invoke(this);
-        Destroy(gameObject);
+        OnDied?.Invoke();
     }
 
     private void NotifyHealthChanged()

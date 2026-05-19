@@ -12,6 +12,8 @@ public class EnemyMovement : MonoBehaviour
 
     private int currentWaypointIndex;
     private bool reachedEnd;
+    private bool isDespawning;
+
     private float slowMultiplier = 1f;
     private float slowTimer = 0f;
 
@@ -19,25 +21,42 @@ public class EnemyMovement : MonoBehaviour
     public int BaseDamage => enemyDefinition != null ? enemyDefinition.baseDamage : 1;
     public bool IgnoresFreezer => enemyDefinition != null && enemyDefinition.ignoresFreezer;
 
+    private void Awake()
+    {
+        enemyHealth = GetComponent<EnemyHealth>();
+
+        if (enemyHealth != null)
+            enemyHealth.OnDied += HandleDied;
+    }
+
+    private void OnDestroy()
+    {
+        if (enemyHealth != null)
+            enemyHealth.OnDied -= HandleDied;
+    }
+
     public void Initialize(PathManager path, BaseHealth targetBase, EnemyDefinition definition = null)
     {
         pathManager = path;
         baseHealth = targetBase;
         enemyDefinition = definition;
+
         currentWaypointIndex = 0;
         reachedEnd = false;
+        isDespawning = false;
+
         slowMultiplier = 1f;
         slowTimer = 0f;
 
-        enemyHealth = GetComponent<EnemyHealth>();
+        if (enemyHealth == null)
+            enemyHealth = GetComponent<EnemyHealth>();
 
         if (enemyDefinition != null)
         {
             moveSpeed = enemyDefinition.moveSpeed;
+
             if (enemyHealth != null)
-            {
                 enemyHealth.Initialize(enemyDefinition.maxHP);
-            }
         }
         else if (enemyHealth != null)
         {
@@ -50,22 +69,20 @@ public class EnemyMovement : MonoBehaviour
             currentWaypointIndex = 1;
             UpdateProgress();
         }
+
+        gameObject.SetActive(true);
     }
 
     private void Update()
     {
         if (reachedEnd || pathManager == null)
-        {
             return;
-        }
 
         if (slowTimer > 0f)
         {
             slowTimer -= Time.deltaTime;
             if (slowTimer <= 0f)
-            {
                 slowMultiplier = 1f;
-            }
         }
 
         if (currentWaypointIndex >= pathManager.WaypointCount)
@@ -76,6 +93,7 @@ public class EnemyMovement : MonoBehaviour
 
         float currentSpeed = moveSpeed * slowMultiplier;
         Vector3 targetPosition = pathManager.GetWaypointPosition(currentWaypointIndex);
+
         transform.position = Vector3.MoveTowards(transform.position, targetPosition, currentSpeed * Time.deltaTime);
 
         if (Vector3.Distance(transform.position, targetPosition) < 0.05f)
@@ -88,26 +106,42 @@ public class EnemyMovement : MonoBehaviour
     public bool ApplySlow(float multiplier, float duration)
     {
         if (IgnoresFreezer)
-        {
             return false;
-        }
 
         slowMultiplier = Mathf.Clamp(multiplier, 0.1f, 1f);
         slowTimer = Mathf.Max(0f, duration);
         return true;
     }
 
+    private void HandleDied()
+    {
+        Despawn();
+    }
+
     private void ReachBase()
     {
-        if (reachedEnd) return;
+        if (reachedEnd)
+            return;
 
         reachedEnd = true;
-        if (baseHealth != null)
-        {
-            baseHealth.TakeDamage(BaseDamage);
-        }
 
-        Destroy(gameObject);
+        if (baseHealth != null)
+            baseHealth.TakeDamage(BaseDamage);
+
+        Despawn();
+    }
+
+    private void Despawn()
+    {
+        if (isDespawning)
+            return;
+
+        isDespawning = true;
+
+        if (ObjectPool.Instance != null)
+            ObjectPool.Instance.Return(gameObject);
+        else
+            gameObject.SetActive(false);
     }
 
     private void UpdateProgress()

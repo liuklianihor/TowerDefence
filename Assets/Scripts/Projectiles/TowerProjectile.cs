@@ -12,6 +12,8 @@ public class TowerProjectile : MonoBehaviour
     private float slowMultiplier;
     private float slowDuration;
 
+    private bool despawning;
+
     public void Initialize(
         Transform targetTransform,
         int projectileDamage,
@@ -28,35 +30,38 @@ public class TowerProjectile : MonoBehaviour
         impactMode = mode;
         slowMultiplier = slowMultiplierValue;
         slowDuration = slowDurationValue;
+        despawning = false;
     }
 
     private void Update()
     {
-        if (target == null)
+        if (target == null || !target.gameObject.activeInHierarchy)
         {
-            Destroy(gameObject);
+            Despawn();
             return;
         }
 
         transform.position = Vector3.MoveTowards(transform.position, target.position, speed * Time.deltaTime);
 
         if (Vector3.Distance(transform.position, target.position) <= hitDistance)
-        {
             Impact();
-        }
     }
 
     private void Impact()
     {
+        if (despawning)
+            return;
+
         if (impactMode == ProjectileImpactMode.Slow)
         {
-            var targetEnemy = target.GetComponent<EnemyTarget>();
+            EnemyTarget targetEnemy = target.GetComponent<EnemyTarget>();
             if (targetEnemy != null)
             {
                 targetEnemy.TryApplySlow(slowMultiplier, slowDuration);
                 targetEnemy.TakeDamage(damage);
             }
-            Destroy(gameObject);
+
+            Despawn();
             return;
         }
 
@@ -66,7 +71,9 @@ public class TowerProjectile : MonoBehaviour
             foreach (Collider2D hit in hits)
             {
                 EnemyTarget enemy = hit.GetComponent<EnemyTarget>();
-                if (enemy == null) continue;
+                if (enemy == null)
+                    continue;
+
                 enemy.TakeDamage(damage);
             }
         }
@@ -74,11 +81,22 @@ public class TowerProjectile : MonoBehaviour
         {
             EnemyTarget enemy = target.GetComponent<EnemyTarget>();
             if (enemy != null)
-            {
                 enemy.TakeDamage(damage);
-            }
         }
 
-        Destroy(gameObject);
+        Despawn();
+    }
+
+    private void Despawn()
+    {
+        if (despawning)
+            return;
+
+        despawning = true;
+
+        if (ObjectPool.Instance != null)
+            ObjectPool.Instance.Return(gameObject);
+        else
+            gameObject.SetActive(false);
     }
 }

@@ -20,8 +20,11 @@ public class EnemySpawner : MonoBehaviour
 
     private void Start()
     {
-        if (pathManager == null) pathManager = FindFirstObjectByType<PathManager>();
-        if (baseHealth == null) baseHealth = FindFirstObjectByType<BaseHealth>();
+        if (pathManager == null)
+            pathManager = FindFirstObjectByType<PathManager>();
+
+        if (baseHealth == null)
+            baseHealth = FindFirstObjectByType<BaseHealth>();
 
         if (spawnPoint == null && pathManager != null)
         {
@@ -34,21 +37,19 @@ public class EnemySpawner : MonoBehaviour
     public void StartWave(List<EnemySpawnEntry> wave, float interval)
     {
         if (wave == null || wave.Count == 0)
-        {
             return;
-        }
 
         if (spawnRoutine != null)
-        {
             StopCoroutine(spawnRoutine);
-        }
 
         spawnInterval = interval;
         queue.Clear();
 
         for (int i = 0; i < wave.Count; i++)
         {
-            if (wave[i] == null || wave[i].Enemy == null) continue;
+            if (wave[i] == null || wave[i].Enemy == null)
+                continue;
+
             queue.Enqueue(wave[i]);
         }
 
@@ -71,12 +72,21 @@ public class EnemySpawner : MonoBehaviour
     private void SpawnNextFromQueue()
     {
         if (enemyPrefab == null || pathManager == null || baseHealth == null || spawnPoint == null)
-        {
             return;
-        }
 
         EnemySpawnEntry entry = queue.Dequeue();
-        EnemyMovement enemy = Instantiate(enemyPrefab, spawnPoint.position, Quaternion.identity);
-        enemy.Initialize(pathManager, baseHealth, entry.Enemy);
+
+        GameObject enemyObject = ObjectPool.Instance.Get(
+            enemyPrefab.gameObject,
+            spawnPoint.position,
+            Quaternion.identity
+        );
+
+        if (enemyObject == null)
+            return;
+
+        EnemyMovement enemy = enemyObject.GetComponent<EnemyMovement>();
+        if (enemy != null)
+            enemy.Initialize(pathManager, baseHealth, entry.Enemy);
     }
 }
