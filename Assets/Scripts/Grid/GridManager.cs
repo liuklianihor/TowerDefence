@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using System.Linq;
 
 public class GridManager : MonoBehaviour
 {
@@ -36,7 +36,6 @@ public class GridManager : MonoBehaviour
     private void Start()
     {
         GenerateGrid();
-        ApplyPathToGrid();
     }
 
     public void GenerateGrid()
@@ -51,40 +50,34 @@ public class GridManager : MonoBehaviour
                 Vector2Int gridPos = new Vector2Int(x, y);
                 Vector3 worldPos = GridToWorld(gridPos);
 
-                bool isPathCell = IsPathCell(gridPos);
-                Sprite sprite = null;
-
-                if (isPathCell && tileArtSet != null && tileArtSet.pathTile != null)
-                    sprite = tileArtSet.pathTile;
-                else if (tileArtSet != null)
-                    sprite = tileArtSet.GetGroundTile(gridPos);
+                TileKind kind = ResolveTileKind(gridPos);
+                Sprite sprite = tileArtSet != null ? tileArtSet.GetTile(kind) : null;
 
                 TileView tile = Instantiate(tilePrefab, worldPos, Quaternion.identity, gridRoot);
                 tile.name = $"Tile_{x}_{y}";
-                tile.Initialize(gridPos, sprite, isPathCell);
+                tile.Initialize(gridPos, sprite, kind == TileKind.Road);
 
                 tiles.Add(gridPos, tile);
             }
         }
     }
 
-    public void ApplyPathToGrid()
+    private TileKind ResolveTileKind(Vector2Int cell)
     {
-        if (pathManager == null || tiles == null || tiles.Count == 0)
-            return;
+        if (IsPathCell(cell))
+            return TileKind.Road;
 
-        foreach (Vector2Int pathCell in pathManager.PathCells)
-        {
-            if (!tiles.TryGetValue(pathCell, out TileView tileView) || tileView == null)
-                continue;
+        if (IsPathCell(cell + Vector2Int.down))  return TileKind.BelowRoad;
+        if (IsPathCell(cell + Vector2Int.up))    return TileKind.AboveRoad;
+        if (IsPathCell(cell + Vector2Int.right)) return TileKind.RightOfRoad;
+        if (IsPathCell(cell + Vector2Int.left))  return TileKind.LeftOfRoad;
 
-            tileView.SetPath(true);
+        if (IsPathCell(cell + new Vector2Int(-1, 1))) return TileKind.TopLeft;
+        if (IsPathCell(cell + new Vector2Int(1, 1)))  return TileKind.TopRight;
+        if (IsPathCell(cell + new Vector2Int(-1, -1))) return TileKind.BottomLeft;
+        if (IsPathCell(cell + new Vector2Int(1, -1)))  return TileKind.BottomRight;
 
-            if (tileArtSet != null && tileArtSet.pathTile != null)
-            {
-                tileView.SetSprite(tileArtSet.pathTile);
-            }
-        }
+        return TileKind.Grass;
     }
 
     public bool IsInsideGrid(Vector2Int cell)

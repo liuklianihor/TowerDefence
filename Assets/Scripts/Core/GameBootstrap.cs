@@ -26,6 +26,6 @@ public class GameBootstrap : MonoBehaviour
     private void Start()
     {
         if (gridManager != null)
-            gridManager.ApplyPathToGrid();
+            gridManager.GenerateGrid();
     }
 }
