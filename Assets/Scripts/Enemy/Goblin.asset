@@ -17,7 +17,7 @@ MonoBehaviour:
   moveSpeed: 3
   baseDamage: 1
   cost: 10
-  goldReward: 5
+  goldReward: 10
   ignoresFreezer: 0
   sprite: {fileID: 6770096803206452686, guid: 62ac66be26a296e4591a9500a85fc55d, type: 3}
   enemyPrefab: {fileID: 4976099318046384748, guid: 31b8292d45a471a4886fedb079026882, type: 3}

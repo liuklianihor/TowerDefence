@@ -17,14 +17,12 @@ public class EnemySpawner : MonoBehaviour
 
     private Coroutine spawnRoutine;
     private readonly Queue<EnemySpawnEntry> queue = new();
+    private readonly HashSet<EnemyMovement> activeEnemies = new();
 
     private void Start()
     {
-        if (pathManager == null)
-            pathManager = FindFirstObjectByType<PathManager>();
-
-        if (baseHealth == null)
-            baseHealth = FindFirstObjectByType<BaseHealth>();
+        if (pathManager == null) pathManager = FindFirstObjectByType<PathManager>();
+        if (baseHealth == null) baseHealth = FindFirstObjectByType<BaseHealth>();
 
         if (spawnPoint == null && pathManager != null)
         {
@@ -36,24 +34,57 @@ public class EnemySpawner : MonoBehaviour
 
     public void StartWave(List<EnemySpawnEntry> wave, float interval)
     {
-        if (wave == null || wave.Count == 0)
-            return;
+        if (wave == null || wave.Count == 0) return;
 
-        if (spawnRoutine != null)
-            StopCoroutine(spawnRoutine);
+        StopWave(true);
 
         spawnInterval = interval;
         queue.Clear();
 
         for (int i = 0; i < wave.Count; i++)
         {
-            if (wave[i] == null || wave[i].Enemy == null)
-                continue;
-
+            if (wave[i] == null || wave[i].Enemy == null) continue;
             queue.Enqueue(wave[i]);
         }
 
         spawnRoutine = StartCoroutine(SpawnWave());
+    }
+
+    public void StopWave(bool despawnActiveEnemies = true)
+    {
+        if (spawnRoutine != null)
+        {
+            StopCoroutine(spawnRoutine);
+            spawnRoutine = null;
+        }
+
+        queue.Clear();
+
+        if (despawnActiveEnemies)
+        {
+            var snapshot = new List<EnemyMovement>(activeEnemies);
+
+            for (int i = 0; i < snapshot.Count; i++)
+            {
+                EnemyMovement enemy = snapshot[i];
+                if (enemy != null)
+                {
+                    enemy.DespawnToPool();
+                }
+            }
+        }
+        else
+        {
+            foreach (var enemy in activeEnemies)
+            {
+                if (enemy != null)
+                {
+                    enemy.OnDespawned -= HandleEnemyDespawned;
+                }
+            }
+        }
+
+        activeEnemies.Clear();
     }
 
     public bool IsSpawning => spawnRoutine != null;
@@ -67,24 +98,19 @@ public class EnemySpawner : MonoBehaviour
         }
 
         spawnRoutine = null;
+        TryFinishWave();
     }
 
     private void SpawnNextFromQueue()
     {
-        if (pathManager == null || baseHealth == null || spawnPoint == null || ObjectPool.Instance == null)
-            return;
+        if (pathManager == null || baseHealth == null || spawnPoint == null || ObjectPool.Instance == null) return;
 
         EnemySpawnEntry entry = queue.Dequeue();
-
-        if (entry == null || entry.Enemy == null)
-            return;
+        if (entry == null || entry.Enemy == null) return;
 
         GameObject prefabToSpawn = null;
-
-        if (entry.Enemy.enemyPrefab != null)
-            prefabToSpawn = entry.Enemy.enemyPrefab;
-        else if (enemyPrefab != null)
-            prefabToSpawn = enemyPrefab.gameObject;
+        if (entry.Enemy.enemyPrefab != null) prefabToSpawn = entry.Enemy.enemyPrefab;
+        else if (enemyPrefab != null) prefabToSpawn = enemyPrefab.gameObject;
 
         if (prefabToSpawn == null)
         {
@@ -92,24 +118,49 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
-        GameObject enemyObject = ObjectPool.Instance.Get(
-            prefabToSpawn,
-            spawnPoint.position,
-            Quaternion.identity
-        );
-
-        if (enemyObject == null)
-            return;
+        GameObject enemyObject = ObjectPool.Instance.Get(prefabToSpawn, spawnPoint.position, Quaternion.identity);
+        if (enemyObject == null) return;
 
         EnemyMovement enemy = enemyObject.GetComponent<EnemyMovement>();
-
-        if (enemy == null)
-            enemy = enemyObject.GetComponentInChildren<EnemyMovement>();
+        if (enemy == null) enemy = enemyObject.GetComponentInChildren<EnemyMovement>();
 
         if (enemy != null)
+        {
+            if (activeEnemies.Add(enemy))
+            {
+                enemy.OnDespawned += HandleEnemyDespawned;
+            }
+
             enemy.Initialize(pathManager, baseHealth, entry.Enemy);
+        }
         else
+        {
             Debug.LogError($"EnemySpawner: prefab '{prefabToSpawn.name}' does not contain EnemyMovement.");
+        }
+    }
+
+    private void HandleEnemyDespawned(EnemyMovement enemy)
+    {
+        if (enemy != null)
+        {
+            enemy.OnDespawned -= HandleEnemyDespawned;
+            activeEnemies.Remove(enemy);
+        }
+
+        TryFinishWave();
+    }
+
+    private void TryFinishWave()
+    {
+        if (spawnRoutine != null) return;
+        if (queue.Count > 0) return;
+        if (activeEnemies.Count > 0) return;
+
+        if (GameStateManager.Instance != null &&
+            GameStateManager.Instance.CurrentPhase == GamePhase.Battle)
+        {
+            GameStateManager.Instance.NotifyBattleFinished(true);
+        }
     }
 
     public void SetBaseHealth(BaseHealth targetBase)

@@ -21,21 +21,25 @@ public class BaseHealth : MonoBehaviour
     {
         CurrentHP = maxHP;
         IsDestroyed = false;
-        NotifyHealthChanged();
+
+        OnHealthChanged?.Invoke(CurrentHP, maxHP);
     }
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(int amount)
     {
-        if (IsDestroyed || damage <= 0)
+        if (IsDestroyed || amount <= 0)
             return;
 
-        CurrentHP = Mathf.Max(0, CurrentHP - damage);
-        NotifyHealthChanged();
+        CurrentHP = Mathf.Max(0, CurrentHP - amount);
+
+        OnHealthChanged?.Invoke(CurrentHP, maxHP);
 
         if (CurrentHP <= 0)
         {
             IsDestroyed = true;
+
             OnBaseDestroyed?.Invoke();
+
             Debug.Log("Base destroyed. Game Over.");
         }
     }
@@ -46,11 +50,7 @@ public class BaseHealth : MonoBehaviour
             return;
 
         CurrentHP = Mathf.Min(maxHP, CurrentHP + amount);
-        NotifyHealthChanged();
-    }
 
-    private void NotifyHealthChanged()
-    {
         OnHealthChanged?.Invoke(CurrentHP, maxHP);
     }
 }

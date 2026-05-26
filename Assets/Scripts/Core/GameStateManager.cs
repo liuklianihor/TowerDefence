@@ -15,6 +15,7 @@ public class GameStateManager : MonoBehaviour
     [SerializeField] private BaseHealth baseHealth;
     [SerializeField] private EnemySpawner enemySpawner;
     [SerializeField] private WaveComposer waveComposer;
+    [SerializeField] private TowerPlacementController towerPlacementController;
 
     [Header("Wave")]
     [SerializeField] private float spawnInterval = 1f;
@@ -23,10 +24,11 @@ public class GameStateManager : MonoBehaviour
     public GamePhase CurrentPhase { get; private set; } = GamePhase.Menu;
     public int CurrentRound => currentRound;
     public int TotalRounds => totalRounds;
+    public GameEconomy Economy => economy;
 
     public event Action<GamePhase> OnPhaseChanged;
     public event Action<int, int> OnRoundChanged;
-    public event Action<bool> OnGameEnded; // true = defender wins
+    public event Action<bool> OnGameEnded;
 
     private readonly List<EnemySpawnEntry> currentWave = new();
 
@@ -39,7 +41,6 @@ public class GameStateManager : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
     }
 
     private void Start()
@@ -48,6 +49,7 @@ public class GameStateManager : MonoBehaviour
         if (baseHealth == null) baseHealth = FindFirstObjectByType<BaseHealth>();
         if (enemySpawner == null) enemySpawner = FindFirstObjectByType<EnemySpawner>();
         if (waveComposer == null) waveComposer = FindFirstObjectByType<WaveComposer>();
+        if (towerPlacementController == null) towerPlacementController = FindFirstObjectByType<TowerPlacementController>();
 
         if (baseHealth != null)
         {
@@ -63,14 +65,30 @@ public class GameStateManager : MonoBehaviour
         {
             baseHealth.OnBaseDestroyed -= HandleBaseDestroyed;
         }
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
     public void StartNewGame()
     {
         currentRound = 1;
+
+        enemySpawner?.StopWave(true);
+        towerPlacementController?.ResetForNewGame();
+        baseHealth?.ResetBase();
         economy?.ResetEconomy();
+
         SetPhase(GamePhase.Preparation);
         OnRoundChanged?.Invoke(currentRound, totalRounds);
+    }
+
+    public void RestartGame()
+    {
+        StartNewGame();
+        Debug.Log("Game restarted.");
     }
 
     public void StartPreparation()
@@ -81,11 +99,13 @@ public class GameStateManager : MonoBehaviour
 
     public void StartBattle()
     {
-        if (CurrentPhase == GamePhase.GameOver) return;
+        if (CurrentPhase != GamePhase.Preparation) return;
         if (enemySpawner == null || waveComposer == null || economy == null) return;
 
         currentWave.Clear();
-        currentWave.AddRange(waveComposer.ComposeAutoWave(currentRound, economy.AttackBudget, maxEnemiesPerWave));
+        currentWave.AddRange(
+            waveComposer.ComposeAutoWave(currentRound, economy.AttackBudget, maxEnemiesPerWave)
+        );
 
         if (currentWave.Count == 0)
         {
@@ -93,7 +113,7 @@ public class GameStateManager : MonoBehaviour
             return;
         }
 
-        economy.SpendAttackBudget(GetWaveCost(currentWave));
+        economy.BurnAttackBudget();
         SetPhase(GamePhase.Battle);
         enemySpawner.StartWave(currentWave, spawnInterval);
     }
@@ -101,13 +121,9 @@ public class GameStateManager : MonoBehaviour
     public void EndBattle(bool defenderWonRound)
     {
         if (CurrentPhase == GamePhase.GameOver) return;
+        if (CurrentPhase != GamePhase.Battle) return;
 
         SetPhase(GamePhase.RoundEnd);
-
-        if (defenderWonRound)
-        {
-            economy?.PrepareForNextRound(currentRound);
-        }
 
         if (baseHealth != null && baseHealth.IsDestroyed)
         {
@@ -122,30 +138,26 @@ public class GameStateManager : MonoBehaviour
         }
 
         currentRound++;
+        economy?.PrepareForNextRound(currentRound);
+
         OnRoundChanged?.Invoke(currentRound, totalRounds);
         SetPhase(GamePhase.Preparation);
     }
 
     public void GameOver(bool defenderWon)
     {
+        if (CurrentPhase == GamePhase.GameOver) return;
+
+        enemySpawner?.StopWave(true);
         SetPhase(GamePhase.GameOver);
+
+        Time.timeScale = 1f;
         OnGameEnded?.Invoke(defenderWon);
     }
 
     public void NotifyBattleFinished(bool defenderWonRound)
     {
         EndBattle(defenderWonRound);
-    }
-
-    private int GetWaveCost(List<EnemySpawnEntry> wave)
-    {
-        int total = 0;
-        for (int i = 0; i < wave.Count; i++)
-        {
-            if (wave[i]?.Enemy == null) continue;
-            total += wave[i].Enemy.cost;
-        }
-        return total;
     }
 
     private void HandleBaseDestroyed()
@@ -156,6 +168,7 @@ public class GameStateManager : MonoBehaviour
     private void SetPhase(GamePhase phase)
     {
         if (CurrentPhase == phase) return;
+
         CurrentPhase = phase;
         OnPhaseChanged?.Invoke(CurrentPhase);
     }

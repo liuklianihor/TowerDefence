@@ -5,11 +5,10 @@ public class GameEconomy : MonoBehaviour
 {
     [Header("Starting Values")]
     [SerializeField] private int startingGold = 300;
-    [SerializeField] private int startingAttackBudget = 200;
+    [SerializeField] private int startingAttackBudget = 300;
 
     [Header("Round Growth")]
-    [SerializeField] private int goldRewardPerRound = 50;
-    [SerializeField] private int attackBudgetIncreasePerRound = 25;
+    [SerializeField] private int attackBudgetIncreasePerRound = 30;
 
     public int Gold { get; private set; }
     public int AttackBudget { get; private set; }
@@ -25,16 +24,18 @@ public class GameEconomy : MonoBehaviour
     public void ResetEconomy()
     {
         Gold = startingGold;
-        AttackBudget = startingAttackBudget;
+        SetAttackBudgetForRound(1);
         NotifyGoldChanged();
-        NotifyAttackBudgetChanged();
     }
 
     public void PrepareForNextRound(int roundIndex)
     {
-        Gold += goldRewardPerRound;
-        AttackBudget += attackBudgetIncreasePerRound;
-        NotifyGoldChanged();
+        SetAttackBudgetForRound(roundIndex);
+    }
+
+    public void BurnAttackBudget()
+    {
+        AttackBudget = 0;
         NotifyAttackBudgetChanged();
     }
 
@@ -55,6 +56,7 @@ public class GameEconomy : MonoBehaviour
     public void AddGold(int amount)
     {
         if (amount <= 0) return;
+
         Gold += amount;
         NotifyGoldChanged();
     }
@@ -76,10 +78,19 @@ public class GameEconomy : MonoBehaviour
     public void AddAttackBudget(int amount)
     {
         if (amount <= 0) return;
+
         AttackBudget += amount;
         NotifyAttackBudgetChanged();
     }
 
+    private void SetAttackBudgetForRound(int roundIndex)
+    {
+        roundIndex = Mathf.Max(1, roundIndex);
+        AttackBudget = startingAttackBudget + (roundIndex - 1) * attackBudgetIncreasePerRound;
+        NotifyAttackBudgetChanged();
+    }
+
     private void NotifyGoldChanged() => OnGoldChanged?.Invoke(Gold, startingGold);
+
     private void NotifyAttackBudgetChanged() => OnAttackBudgetChanged?.Invoke(AttackBudget, startingAttackBudget);
 }

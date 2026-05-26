@@ -256,7 +256,7 @@ public class GameHUD : MonoBehaviour
     public void OnRestartPressed()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        gameStateManager.RestartGame();
     }
 
     public void OnClearSelectionPressed()

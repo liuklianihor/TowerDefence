@@ -155,31 +155,50 @@ public class TowerPlacementController : MonoBehaviour
 
     public bool ClearPlacedTowersAndRefund()
     {
-        if (gameStateManager != null && gameStateManager.CurrentPhase != GamePhase.Preparation)
-            return false;
-
-        int refund = 0;
-
-        foreach (PlacedTowerInfo info in placedTowers.Values)
-        {
-            if (info.tower != null)
-                Destroy(info.tower.gameObject);
-
-            refund += Mathf.Max(0, info.cost);
-        }
-
-        placedTowers.Clear();
-        occupiedCells.Clear();
-
-        if (economy != null && refund > 0)
-            economy.AddGold(refund);
-
-        SelectedTower = defaultTower;
-        return true;
+        return ClearPlacedTowersInternal(refund: true, ignorePhaseCheck: false);
     }
 
     public void ClearPlacedTowers()
     {
-        ClearPlacedTowersAndRefund();
+        ClearPlacedTowersInternal(refund: true, ignorePhaseCheck: false);
+    }
+
+    public void ResetForNewGame()
+    {
+        ClearPlacedTowersInternal(refund: false, ignorePhaseCheck: true);
+    }
+
+    private bool ClearPlacedTowersInternal(bool refund, bool ignorePhaseCheck)
+    {
+        if (!ignorePhaseCheck && gameStateManager != null && gameStateManager.CurrentPhase != GamePhase.Preparation)
+        {
+            return false;
+        }
+
+        int refundAmount = 0;
+
+        foreach (PlacedTowerInfo info in placedTowers.Values)
+        {
+            if (info.tower != null)
+            {
+                Destroy(info.tower.gameObject);
+            }
+
+            if (refund)
+            {
+                refundAmount += Mathf.Max(0, info.cost);
+            }
+        }
+
+        placedTowers.Clear();
+        occupiedCells.Clear();
+        SelectedTower = defaultTower;
+
+        if (refund && economy != null && refundAmount > 0)
+        {
+            economy.AddGold(refundAmount);
+        }
+
+        return true;
     }
 }
