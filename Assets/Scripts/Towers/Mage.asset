@@ -16,7 +16,7 @@ MonoBehaviour:
   cost: 150
   range: 2.5
   cooldown: 1.2
-  damage: 20
+  damage: 30
   projectileSpeed: 8
   attackMode: 1
   targetMode: 0

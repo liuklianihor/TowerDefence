@@ -5,10 +5,10 @@ public class GameEconomy : MonoBehaviour
 {
     [Header("Starting Values")]
     [SerializeField] private int startingGold = 300;
-    [SerializeField] private int startingAttackBudget = 300;
+    [SerializeField] private int startingAttackBudget = 200;
 
     [Header("Round Growth")]
-    [SerializeField] private int attackBudgetIncreasePerRound = 30;
+    [SerializeField] private int attackBudgetIncreasePerRound = 50;
 
     public int Gold { get; private set; }
     public int AttackBudget { get; private set; }

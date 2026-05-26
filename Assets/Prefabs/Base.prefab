@@ -47,7 +47,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 680d38f88b1728649be8acba2a18cb04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BaseHealth
-  maxHP: 20
+  maxHP: 50
 --- !u!212 &8561884188308995377
 SpriteRenderer:
   serializedVersion: 2

@@ -10,15 +10,15 @@ public class WaveComposer : MonoBehaviour
     {
         var wave = new List<EnemySpawnEntry>();
 
-        if (enemyCatalog == null || enemyCatalog.Count == 0 || attackBudget <= 0)
+        if (enemyCatalog == null || enemyCatalog.Count == 0 || attackBudget <= 0 || maxEnemies <= 0)
             return wave;
 
         List<EnemyDefinition> orderedCatalog = new List<EnemyDefinition>();
-
         for (int i = 0; i < enemyCatalog.Count; i++)
         {
-            if (enemyCatalog[i] != null)
-                orderedCatalog.Add(enemyCatalog[i]);
+            EnemyDefinition enemy = enemyCatalog[i];
+            if (enemy != null && enemy.cost > 0)
+                orderedCatalog.Add(enemy);
         }
 
         orderedCatalog.Sort((a, b) => a.enemyKind.CompareTo(b.enemyKind));
@@ -27,34 +27,20 @@ public class WaveComposer : MonoBehaviour
             return wave;
 
         int remainingBudget = attackBudget;
-        int enemyCount = 0;
-        int cycleIndex = 0;
+        int enemyIndex = 0;
 
-        while (remainingBudget > 0 && enemyCount < maxEnemies)
+        while (wave.Count < maxEnemies)
         {
-            bool foundAffordableEnemy = false;
-            EnemyDefinition picked = null;
-
-            for (int attempts = 0; attempts < orderedCatalog.Count; attempts++)
-            {
-                EnemyDefinition candidate = orderedCatalog[cycleIndex % orderedCatalog.Count];
-                cycleIndex++;
-
-                if (candidate == null || candidate.cost > remainingBudget)
-                    continue;
-
-                picked = candidate;
-                foundAffordableEnemy = true;
-                break;
-            }
-
-            if (!foundAffordableEnemy || picked == null)
+            EnemyDefinition enemy = orderedCatalog[enemyIndex];
+            if (enemy.cost > remainingBudget)
                 break;
 
-            wave.Add(new EnemySpawnEntry(picked, 1));
+            wave.Add(new EnemySpawnEntry(enemy, 1));
+            remainingBudget -= enemy.cost;
 
-            remainingBudget -= picked.cost;
-            enemyCount++;
+            enemyIndex++;
+            if (enemyIndex >= orderedCatalog.Count)
+                enemyIndex = 0;
         }
 
         return wave;
