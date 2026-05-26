@@ -39,8 +39,6 @@ public class BaseHealth : MonoBehaviour
             IsDestroyed = true;
 
             OnBaseDestroyed?.Invoke();
-
-            Debug.Log("Base destroyed. Game Over.");
         }
     }
 

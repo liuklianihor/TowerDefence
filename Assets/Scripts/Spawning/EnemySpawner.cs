@@ -63,7 +63,6 @@ public class EnemySpawner : MonoBehaviour
         if (despawnActiveEnemies)
         {
             var snapshot = new List<EnemyMovement>(activeEnemies);
-
             for (int i = 0; i < snapshot.Count; i++)
             {
                 EnemyMovement enemy = snapshot[i];
@@ -103,14 +102,18 @@ public class EnemySpawner : MonoBehaviour
 
     private void SpawnNextFromQueue()
     {
-        if (pathManager == null || baseHealth == null || spawnPoint == null || ObjectPool.Instance == null) return;
+        if (pathManager == null || baseHealth == null || spawnPoint == null || ObjectPool.Instance == null)
+            return;
 
         EnemySpawnEntry entry = queue.Dequeue();
         if (entry == null || entry.Enemy == null) return;
 
         GameObject prefabToSpawn = null;
-        if (entry.Enemy.enemyPrefab != null) prefabToSpawn = entry.Enemy.enemyPrefab;
-        else if (enemyPrefab != null) prefabToSpawn = enemyPrefab.gameObject;
+
+        if (entry.Enemy.enemyPrefab != null)
+            prefabToSpawn = entry.Enemy.enemyPrefab;
+        else if (enemyPrefab != null)
+            prefabToSpawn = enemyPrefab.gameObject;
 
         if (prefabToSpawn == null)
         {
@@ -122,7 +125,8 @@ public class EnemySpawner : MonoBehaviour
         if (enemyObject == null) return;
 
         EnemyMovement enemy = enemyObject.GetComponent<EnemyMovement>();
-        if (enemy == null) enemy = enemyObject.GetComponentInChildren<EnemyMovement>();
+        if (enemy == null)
+            enemy = enemyObject.GetComponentInChildren<EnemyMovement>();
 
         if (enemy != null)
         {
@@ -156,11 +160,11 @@ public class EnemySpawner : MonoBehaviour
         if (queue.Count > 0) return;
         if (activeEnemies.Count > 0) return;
 
-        if (GameStateManager.Instance != null &&
-            GameStateManager.Instance.CurrentPhase == GamePhase.Battle)
-        {
-            GameStateManager.Instance.NotifyBattleFinished(true);
-        }
+        if (GameStateManager.Instance == null) return;
+        if (GameStateManager.Instance.CurrentPhase != GamePhase.Battle) return;
+        if (GameStateManager.Instance.IsBaseDestroyed) return;
+
+        GameStateManager.Instance.NotifyBattleFinished(true);
     }
 
     public void SetBaseHealth(BaseHealth targetBase)

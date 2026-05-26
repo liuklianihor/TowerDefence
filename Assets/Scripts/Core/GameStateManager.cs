@@ -25,6 +25,7 @@ public class GameStateManager : MonoBehaviour
     public int CurrentRound => currentRound;
     public int TotalRounds => totalRounds;
     public GameEconomy Economy => economy;
+    public bool IsBaseDestroyed => baseHealth != null && baseHealth.IsDestroyed;
 
     public event Action<GamePhase> OnPhaseChanged;
     public event Action<int, int> OnRoundChanged;
@@ -100,7 +101,15 @@ public class GameStateManager : MonoBehaviour
     public void StartBattle()
     {
         if (CurrentPhase != GamePhase.Preparation) return;
-        if (enemySpawner == null || waveComposer == null || economy == null) return;
+
+        if (IsBaseDestroyed)
+        {
+            GameOver(false);
+            return;
+        }
+
+        if (enemySpawner == null || waveComposer == null || economy == null)
+            return;
 
         currentWave.Clear();
         currentWave.AddRange(
@@ -125,7 +134,7 @@ public class GameStateManager : MonoBehaviour
 
         SetPhase(GamePhase.RoundEnd);
 
-        if (baseHealth != null && baseHealth.IsDestroyed)
+        if (IsBaseDestroyed)
         {
             GameOver(false);
             return;
@@ -139,8 +148,8 @@ public class GameStateManager : MonoBehaviour
 
         currentRound++;
         economy?.PrepareForNextRound(currentRound);
-
         OnRoundChanged?.Invoke(currentRound, totalRounds);
+
         SetPhase(GamePhase.Preparation);
     }
 
@@ -148,9 +157,10 @@ public class GameStateManager : MonoBehaviour
     {
         if (CurrentPhase == GamePhase.GameOver) return;
 
+        currentWave.Clear();
         enemySpawner?.StopWave(true);
-        SetPhase(GamePhase.GameOver);
 
+        SetPhase(GamePhase.GameOver);
         Time.timeScale = 1f;
         OnGameEnded?.Invoke(defenderWon);
     }

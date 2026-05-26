@@ -30,6 +30,7 @@ public class GameHUD : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
+        AutoBindButtons();
         WireButtons();
     }
 
@@ -62,17 +63,33 @@ public class GameHUD : MonoBehaviour
 
     private void ResolveReferences()
     {
-        if (gameStateManager == null)
-            gameStateManager = FindFirstObjectByType<GameStateManager>();
+        if (gameStateManager == null) gameStateManager = FindFirstObjectByType<GameStateManager>();
+        if (economy == null) economy = FindFirstObjectByType<GameEconomy>();
+        if (towerPlacementController == null) towerPlacementController = FindFirstObjectByType<TowerPlacementController>();
+        if (baseHealth == null) baseHealth = FindFirstObjectByType<BaseHealth>();
+    }
 
-        if (economy == null)
-            economy = FindFirstObjectByType<GameEconomy>();
+    private void AutoBindButtons()
+    {
+        if (restartButton == null)
+        {
+            Button[] buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                Button btn = buttons[i];
+                if (btn == null) continue;
 
-        if (towerPlacementController == null)
-            towerPlacementController = FindFirstObjectByType<TowerPlacementController>();
+                TMP_Text label = btn.GetComponentInChildren<TMP_Text>(true);
+                if (label == null) continue;
 
-        if (baseHealth == null)
-            baseHealth = FindFirstObjectByType<BaseHealth>();
+                string text = label.text.Trim().ToLowerInvariant();
+                if (text.Contains("restart") || text.Contains("рестарт") || text.Contains("replay"))
+                {
+                    restartButton = btn;
+                    break;
+                }
+            }
+        }
     }
 
     private void WireButtons()
@@ -87,6 +104,7 @@ public class GameHUD : MonoBehaviour
         {
             restartButton.onClick.RemoveListener(OnRestartPressed);
             restartButton.onClick.AddListener(OnRestartPressed);
+            restartButton.interactable = true;
         }
 
         if (clearSelectionButton != null)
@@ -159,8 +177,7 @@ public class GameHUD : MonoBehaviour
 
     private void TryBindBase()
     {
-        if (baseHealth != null)
-            return;
+        if (baseHealth != null) return;
 
         baseHealth = FindFirstObjectByType<BaseHealth>();
         if (baseHealth != null)
@@ -210,11 +227,17 @@ public class GameHUD : MonoBehaviour
         if (startBattleButton != null)
             startBattleButton.interactable = phase == GamePhase.Preparation;
 
+        bool showGameOver = phase == GamePhase.GameOver;
+
         if (restartButton != null)
-            restartButton.gameObject.SetActive(phase == GamePhase.GameOver);
+        {
+            restartButton.gameObject.SetActive(showGameOver);
+            restartButton.interactable = showGameOver;
+            restartButton.transform.SetAsLastSibling();
+        }
 
         if (gameOverPanel != null)
-            gameOverPanel.SetActive(phase == GamePhase.GameOver);
+            gameOverPanel.SetActive(showGameOver);
     }
 
     private void OnGameEnded(bool defenderWon)
@@ -224,26 +247,36 @@ public class GameHUD : MonoBehaviour
 
         if (gameOverPanel != null)
             gameOverPanel.SetActive(true);
+
+        if (restartButton != null)
+        {
+            restartButton.gameObject.SetActive(true);
+            restartButton.interactable = true;
+            restartButton.transform.SetAsLastSibling();
+        }
     }
 
     private void OnBaseHealthChanged(int currentHp, int maxHp)
     {
         UpdateBaseHpText(currentHp, maxHp);
+
+        if (currentHp <= 0 &&
+            gameStateManager != null &&
+            gameStateManager.CurrentPhase != GamePhase.GameOver)
+        {
+            gameStateManager.GameOver(false);
+        }
     }
 
     private void RefreshBaseHealth()
     {
-        if (baseHealth == null || baseHpText == null)
-            return;
-
+        if (baseHealth == null || baseHpText == null) return;
         UpdateBaseHpText(baseHealth.CurrentHP, baseHealth.MaxHP);
     }
 
     private void UpdateBaseHpText(int currentHp, int maxHp)
     {
-        if (baseHpText == null)
-            return;
-
+        if (baseHpText == null) return;
         baseHpText.text = $"HP: {Mathf.Max(0, currentHp)}/{Mathf.Max(1, maxHp)}";
     }
 
@@ -256,7 +289,9 @@ public class GameHUD : MonoBehaviour
     public void OnRestartPressed()
     {
         Time.timeScale = 1f;
-        gameStateManager.RestartGame();
+
+        int sceneIndex = SceneManager.GetActiveScene().buildIndex;
+        SceneManager.LoadScene(sceneIndex);
     }
 
     public void OnClearSelectionPressed()
