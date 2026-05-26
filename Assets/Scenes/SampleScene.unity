@@ -481,51 +481,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f82d69eeeb182a044a9a755c602558a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TileView
---- !u!1 &380683929
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 380683931}
-  - component: {fileID: 380683930}
-  m_Layer: 0
-  m_Name: Base
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &380683930
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 380683929}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 680d38f88b1728649be8acba2a18cb04, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BaseHealth
-  maxHP: 20
---- !u!4 &380683931
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 380683929}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7, y: 6, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &401613563
 GameObject:
   m_ObjectHideFlags: 0
@@ -1071,6 +1026,7 @@ GameObject:
   - component: {fileID: 557681376}
   - component: {fileID: 557681375}
   - component: {fileID: 557681373}
+  - component: {fileID: 557681379}
   m_Layer: 0
   m_Name: GameSystems
   m_TagString: Untagged
@@ -1144,10 +1100,10 @@ MonoBehaviour:
   totalRounds: 10
   currentRound: 1
   economy: {fileID: 557681376}
-  baseHealth: {fileID: 380683930}
+  baseHealth: {fileID: 7247506320966029456, guid: 30c9c073e230b7440a8068fa963bf8eb, type: 3}
   enemySpawner: {fileID: 1180081269}
   waveComposer: {fileID: 557681375}
-  spawnInterval: 1
+  spawnInterval: 2
   maxEnemiesPerWave: 50
 --- !u!4 &557681378
 Transform:
@@ -1164,6 +1120,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &557681379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 557681372}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e04952248529fee4db0955713164bb66, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameBootstrap
+  gridManager: {fileID: 2119273498}
+  pathManager: {fileID: 1255053151}
+  baseHealth: {fileID: 7247506320966029456, guid: 30c9c073e230b7440a8068fa963bf8eb, type: 3}
+  enemySpawner: {fileID: 1180081269}
+  gameHUD: {fileID: 1347029861}
+  basePrefab: {fileID: 1465745581094360338, guid: 30c9c073e230b7440a8068fa963bf8eb, type: 3}
 --- !u!1 &598234949
 GameObject:
   m_ObjectHideFlags: 0
@@ -2780,7 +2754,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   pathManager: {fileID: 1255053151}
-  baseHealth: {fileID: 380683930}
+  baseHealth: {fileID: 7247506320966029456, guid: 30c9c073e230b7440a8068fa963bf8eb, type: 3}
   enemyPrefab: {fileID: 300566995947709052, guid: 31b8292d45a471a4886fedb079026882, type: 3}
   spawnPoint: {fileID: 0}
   spawnInterval: 2
@@ -3033,7 +3007,7 @@ MonoBehaviour:
   gameStateManager: {fileID: 557681377}
   economy: {fileID: 557681376}
   towerPlacementController: {fileID: 557681373}
-  baseHealthComponent: {fileID: 380683931}
+  baseHealth: {fileID: 7247506320966029456, guid: 30c9c073e230b7440a8068fa963bf8eb, type: 3}
   goldText: {fileID: 1917182825}
   attackBudgetText: {fileID: 0}
   baseHpText: {fileID: 2087582741}
@@ -4397,7 +4371,6 @@ SceneRoots:
   - {fileID: 2119273497}
   - {fileID: 2276755440073316201}
   - {fileID: 1255053152}
-  - {fileID: 380683931}
   - {fileID: 1180081270}
   - {fileID: 1612530837}
   - {fileID: 1127226918}

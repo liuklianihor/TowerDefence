@@ -111,4 +111,9 @@ public class EnemySpawner : MonoBehaviour
         else
             Debug.LogError($"EnemySpawner: prefab '{prefabToSpawn.name}' does not contain EnemyMovement.");
     }
+
+    public void SetBaseHealth(BaseHealth targetBase)
+    {
+        baseHealth = targetBase;
+    }
 }

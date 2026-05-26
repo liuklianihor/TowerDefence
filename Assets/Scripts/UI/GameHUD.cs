@@ -1,5 +1,3 @@
-using System;
-using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,9 +9,7 @@ public class GameHUD : MonoBehaviour
     [SerializeField] private GameStateManager gameStateManager;
     [SerializeField] private GameEconomy economy;
     [SerializeField] private TowerPlacementController towerPlacementController;
-
-    [Tooltip("BaseHealth")]
-    [SerializeField] private Component baseHealthComponent;
+    [SerializeField] private BaseHealth baseHealth;
 
     [Header("UI Text")]
     [SerializeField] private TMP_Text goldText;
@@ -31,36 +27,36 @@ public class GameHUD : MonoBehaviour
     [Header("Optional Panels")]
     [SerializeField] private GameObject gameOverPanel;
 
-    private object baseHealthInstance;
-    private PropertyInfo baseCurrentHpProp;
-    private PropertyInfo baseMaxHpProp;
-    private PropertyInfo baseIsDestroyedProp;
-
     private void Awake()
     {
         ResolveReferences();
-        CacheBaseHealthReflection();
         WireButtons();
     }
 
     private void OnEnable()
     {
         Subscribe();
+        TryBindBase();
         RefreshAll();
     }
 
     private void Start()
     {
+        TryBindBase();
         RefreshAll();
     }
 
     private void OnDisable()
     {
         Unsubscribe();
+        UnbindBase();
     }
 
     private void Update()
     {
+        if (baseHealth == null)
+            TryBindBase();
+
         RefreshBaseHealth();
     }
 
@@ -75,34 +71,8 @@ public class GameHUD : MonoBehaviour
         if (towerPlacementController == null)
             towerPlacementController = FindFirstObjectByType<TowerPlacementController>();
 
-        if (baseHealthComponent == null)
-            baseHealthComponent = FindFirstObjectByType<MonoBehaviour>(FindObjectsInactive.Include);
-
-        baseHealthInstance = baseHealthComponent;
-    }
-
-    private void CacheBaseHealthReflection()
-    {
-        if (baseHealthInstance == null)
-            return;
-
-        Type t = baseHealthInstance.GetType();
-
-        baseCurrentHpProp = GetFirstProperty(t, "CurrentHP", "CurrentHealth", "HP", "Health");
-        baseMaxHpProp = GetFirstProperty(t, "MaxHP", "MaxHealth", "TotalHP", "HealthMax", "HPMax");
-        baseIsDestroyedProp = GetFirstProperty(t, "IsDestroyed", "Destroyed", "IsDead");
-    }
-
-    private PropertyInfo GetFirstProperty(Type type, params string[] names)
-    {
-        foreach (string name in names)
-        {
-            PropertyInfo prop = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
-            if (prop != null)
-                return prop;
-        }
-
-        return null;
+        if (baseHealth == null)
+            baseHealth = FindFirstObjectByType<BaseHealth>();
     }
 
     private void WireButtons()
@@ -140,6 +110,9 @@ public class GameHUD : MonoBehaviour
             gameStateManager.OnPhaseChanged += OnPhaseChanged;
             gameStateManager.OnGameEnded += OnGameEnded;
         }
+
+        if (baseHealth != null)
+            baseHealth.OnHealthChanged += OnBaseHealthChanged;
     }
 
     private void Unsubscribe()
@@ -156,6 +129,42 @@ public class GameHUD : MonoBehaviour
             gameStateManager.OnPhaseChanged -= OnPhaseChanged;
             gameStateManager.OnGameEnded -= OnGameEnded;
         }
+
+        if (baseHealth != null)
+            baseHealth.OnHealthChanged -= OnBaseHealthChanged;
+    }
+
+    public void BindBase(BaseHealth newBaseHealth)
+    {
+        if (baseHealth == newBaseHealth)
+        {
+            RefreshBaseHealth();
+            return;
+        }
+
+        UnbindBase();
+        baseHealth = newBaseHealth;
+
+        if (baseHealth != null)
+            baseHealth.OnHealthChanged += OnBaseHealthChanged;
+
+        RefreshBaseHealth();
+    }
+
+    private void UnbindBase()
+    {
+        if (baseHealth != null)
+            baseHealth.OnHealthChanged -= OnBaseHealthChanged;
+    }
+
+    private void TryBindBase()
+    {
+        if (baseHealth != null)
+            return;
+
+        baseHealth = FindFirstObjectByType<BaseHealth>();
+        if (baseHealth != null)
+            baseHealth.OnHealthChanged += OnBaseHealthChanged;
     }
 
     private void RefreshAll()
@@ -217,49 +226,25 @@ public class GameHUD : MonoBehaviour
             gameOverPanel.SetActive(true);
     }
 
+    private void OnBaseHealthChanged(int currentHp, int maxHp)
+    {
+        UpdateBaseHpText(currentHp, maxHp);
+    }
+
     private void RefreshBaseHealth()
     {
-        if (baseHealthInstance == null || baseHpText == null)
+        if (baseHealth == null || baseHpText == null)
             return;
 
-        int currentHp = ReadIntProperty(baseCurrentHpProp, baseHealthInstance, -1);
-        int maxHp = ReadIntProperty(baseMaxHpProp, baseHealthInstance, -1);
-        bool destroyed = ReadBoolProperty(baseIsDestroyedProp, baseHealthInstance, false);
+        UpdateBaseHpText(baseHealth.CurrentHP, baseHealth.MaxHP);
+    }
 
-        if (destroyed)
-        {
-            baseHpText.text = maxHp > 0 ? $"Base HP: 0/{maxHp}" : "Base HP: 0";
+    private void UpdateBaseHpText(int currentHp, int maxHp)
+    {
+        if (baseHpText == null)
             return;
-        }
 
-        if (currentHp >= 0 && maxHp > 0)
-            baseHpText.text = $"Base HP: {currentHp}/{maxHp}";
-        else if (currentHp >= 0)
-            baseHpText.text = $"Base HP: {currentHp}";
-    }
-
-    private int ReadIntProperty(PropertyInfo prop, object target, int fallback)
-    {
-        if (prop == null || target == null)
-            return fallback;
-
-        object value = prop.GetValue(target);
-        if (value is int intValue)
-            return intValue;
-
-        return fallback;
-    }
-
-    private bool ReadBoolProperty(PropertyInfo prop, object target, bool fallback)
-    {
-        if (prop == null || target == null)
-            return fallback;
-
-        object value = prop.GetValue(target);
-        if (value is bool boolValue)
-            return boolValue;
-
-        return fallback;
+        baseHpText.text = $"HP: {Mathf.Max(0, currentHp)}/{Mathf.Max(1, maxHp)}";
     }
 
     public void OnStartBattlePressed()

@@ -15,7 +15,7 @@ MonoBehaviour:
   enemyKind: 1
   maxHP: 200
   moveSpeed: 1.5
-  baseDamage: 1
+  baseDamage: 3
   cost: 25
   goldReward: 12
   ignoresFreezer: 0

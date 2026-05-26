@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class BaseHealth : MonoBehaviour
 {
-    [SerializeField] private int maxHP = 20;
+    [SerializeField, Min(1)] private int maxHP = 20;
 
     public int CurrentHP { get; private set; }
     public int MaxHP => maxHP;
@@ -27,12 +27,9 @@ public class BaseHealth : MonoBehaviour
     public void TakeDamage(int damage)
     {
         if (IsDestroyed || damage <= 0)
-        {
             return;
-        }
 
-        CurrentHP -= damage;
-        if (CurrentHP < 0) CurrentHP = 0;
+        CurrentHP = Mathf.Max(0, CurrentHP - damage);
         NotifyHealthChanged();
 
         if (CurrentHP <= 0)
@@ -46,12 +43,9 @@ public class BaseHealth : MonoBehaviour
     public void Heal(int amount)
     {
         if (IsDestroyed || amount <= 0)
-        {
             return;
-        }
 
-        CurrentHP += amount;
-        if (CurrentHP > maxHP) CurrentHP = maxHP;
+        CurrentHP = Mathf.Min(maxHP, CurrentHP + amount);
         NotifyHealthChanged();
     }
 
