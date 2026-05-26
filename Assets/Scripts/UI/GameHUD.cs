@@ -17,7 +17,10 @@ public class GameHUD : MonoBehaviour
     [SerializeField] private TMP_Text baseHpText;
     [SerializeField] private TMP_Text roundText;
     [SerializeField] private TMP_Text phaseText;
-    [SerializeField] private TMP_Text gameOverText;
+
+    [Header("Game Over Texts")]
+    [SerializeField] private TMP_Text victoryText;
+    [SerializeField] private TMP_Text defeatText;
 
     [Header("Buttons")]
     [SerializeField] private Button startBattleButton;
@@ -242,8 +245,11 @@ public class GameHUD : MonoBehaviour
 
     private void OnGameEnded(bool defenderWon)
     {
-        if (gameOverText != null)
-            gameOverText.text = defenderWon ? "VICTORY" : "DEFEAT";
+        if (victoryText != null)
+            victoryText.gameObject.SetActive(defenderWon);
+
+        if (defeatText != null)
+            defeatText.gameObject.SetActive(!defenderWon);
 
         if (gameOverPanel != null)
             gameOverPanel.SetActive(true);
@@ -289,7 +295,6 @@ public class GameHUD : MonoBehaviour
     public void OnRestartPressed()
     {
         Time.timeScale = 1f;
-
         int sceneIndex = SceneManager.GetActiveScene().buildIndex;
         SceneManager.LoadScene(sceneIndex);
     }
