@@ -3,7 +3,7 @@ using UnityEngine;
 public class TowerProjectile : MonoBehaviour
 {
     [SerializeField] private float hitDistance = 0.1f;
-    [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private float rotationOffsetDegrees = 0f;
 
     private Transform target;
     private int damage;
@@ -14,28 +14,9 @@ public class TowerProjectile : MonoBehaviour
     private float slowDuration;
     private bool despawning;
 
-    private Color originalColor;
-
-    private void Awake()
-    {
-        if (spriteRenderer == null)
-            spriteRenderer = GetComponentInChildren<SpriteRenderer>(true);
-
-        if (spriteRenderer != null)
-            originalColor = spriteRenderer.color;
-    }
-
     private void OnEnable()
     {
         despawning = false;
-
-        if (spriteRenderer != null)
-        {
-            spriteRenderer.color = originalColor;
-            Color c = spriteRenderer.color;
-            c.a = 1f;
-            spriteRenderer.color = c;
-        }
     }
 
     public void Initialize(
@@ -55,6 +36,8 @@ public class TowerProjectile : MonoBehaviour
         slowMultiplier = slowMultiplierValue;
         slowDuration = slowDurationValue;
         despawning = false;
+
+        UpdateRotationToTarget();
     }
 
     private void Update()
@@ -68,10 +51,24 @@ public class TowerProjectile : MonoBehaviour
             return;
         }
 
+        UpdateRotationToTarget();
         transform.position = Vector3.MoveTowards(transform.position, target.position, speed * Time.deltaTime);
 
         if (Vector3.Distance(transform.position, target.position) <= hitDistance)
             Impact();
+    }
+
+    private void UpdateRotationToTarget()
+    {
+        if (target == null)
+            return;
+
+        Vector2 direction = target.position - transform.position;
+        if (direction.sqrMagnitude < 0.000001f)
+            return;
+
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg + rotationOffsetDegrees;
+        transform.rotation = Quaternion.Euler(0f, 0f, angle);
     }
 
     private void Impact()
@@ -100,15 +97,12 @@ public class TowerProjectile : MonoBehaviour
         if (splashRadius > 0f)
         {
             Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, splashRadius);
-
             for (int i = 0; i < hits.Length; i++)
             {
-                if (hits[i] == null)
-                    continue;
+                if (hits[i] == null) continue;
 
                 EnemyTarget enemy = hits[i].GetComponent<EnemyTarget>();
-                if (enemy == null)
-                    continue;
+                if (enemy == null) continue;
 
                 enemy.TakeDamage(damage);
             }

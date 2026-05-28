@@ -1,19 +1,26 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class TowerBase : MonoBehaviour
 {
     [SerializeField] private TowerData towerData;
+    [SerializeField] private SpriteRenderer towerSprite;
 
     private float nextAttackTime;
 
     public TowerData Data => towerData;
 
+    private void Awake()
+    {
+        if (towerSprite == null)
+            towerSprite = GetComponentInChildren<SpriteRenderer>(true);
+    }
+
     public void Initialize(TowerData data)
     {
         towerData = data;
         nextAttackTime = 0f;
+        SetFacing(true);
     }
 
     private void Update()
@@ -21,19 +28,32 @@ public class TowerBase : MonoBehaviour
         if (towerData == null)
             return;
 
-        if (GameStateManager.Instance != null &&
-            GameStateManager.Instance.CurrentPhase != GamePhase.Battle)
-            return;
-
-        if (Time.time < nextAttackTime)
+        if (GameStateManager.Instance != null && GameStateManager.Instance.CurrentPhase != GamePhase.Battle)
             return;
 
         EnemyTarget target = AcquireTarget();
         if (target == null)
             return;
 
+        UpdateFacing(target.transform.position);
+
+        if (Time.time < nextAttackTime)
+            return;
+
         Attack(target);
         nextAttackTime = Time.time + towerData.cooldown;
+    }
+
+    private void UpdateFacing(Vector3 targetPosition)
+    {
+        bool faceRight = targetPosition.x >= transform.position.x;
+        SetFacing(faceRight);
+    }
+
+    private void SetFacing(bool faceRight)
+    {
+        if (towerSprite != null)
+            towerSprite.flipX = !faceRight;
     }
 
     private void Attack(EnemyTarget target)
@@ -48,9 +68,10 @@ public class TowerBase : MonoBehaviour
         float distance = Vector3.Distance(transform.position, target.transform.position);
         float travelTime = distance / projectileSpeed;
 
-        ProjectileImpactMode impactMode = towerData.attackMode == TowerAttackMode.Slow
-            ? ProjectileImpactMode.Slow
-            : ProjectileImpactMode.Damage;
+        ProjectileImpactMode impactMode =
+            towerData.attackMode == TowerAttackMode.Slow
+                ? ProjectileImpactMode.Slow
+                : ProjectileImpactMode.Damage;
 
         if (towerData.projectilePrefab != null)
         {
@@ -65,8 +86,7 @@ public class TowerBase : MonoBehaviour
             impactMode,
             towerData.slowMultiplier,
             towerData.slowDuration,
-            towerData.splashRadius
-        ));
+            towerData.splashRadius));
     }
 
     private void SpawnProjectile(EnemyTarget target, float projectileSpeed, ProjectileImpactMode impactMode)
@@ -125,12 +145,10 @@ public class TowerBase : MonoBehaviour
             Collider2D[] hits = Physics2D.OverlapCircleAll(target.transform.position, splashRadius);
             for (int i = 0; i < hits.Length; i++)
             {
-                if (hits[i] == null)
-                    continue;
+                if (hits[i] == null) continue;
 
                 EnemyTarget enemy = hits[i].GetComponent<EnemyTarget>();
-                if (enemy == null)
-                    continue;
+                if (enemy == null) continue;
 
                 enemy.TakeDamage(damage);
             }

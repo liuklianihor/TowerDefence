@@ -21,11 +21,13 @@ public class EnemyMovement : MonoBehaviour
     private int currentWaypointIndex;
     private bool reachedEnd;
     private bool isDespawning;
+
     private float slowMultiplier = 1f;
     private float slowTimer = 0f;
 
     private Color originalColor;
     private Sprite originalSprite;
+
     private int lastHp;
     private Coroutine flashRoutine;
     private Coroutine fadeRoutine;
@@ -121,17 +123,16 @@ public class EnemyMovement : MonoBehaviour
             enemyHealth.ResetHealth();
         }
 
-        lastHp = enemyHealth != null ? enemyHealth.CurrentHP : 0;
-        UpdateProgress();
-
         if (pathManager != null && pathManager.WaypointCount > 0)
         {
             transform.position = pathManager.GetWaypointPosition(0);
             currentWaypointIndex = 1;
-            UpdateProgress();
         }
 
+        lastHp = enemyHealth != null ? enemyHealth.CurrentHP : 0;
+        UpdateProgress();
         ResetVisualState();
+        UpdateFacingFromNextWaypoint();
     }
 
     private void Update()
@@ -153,14 +154,18 @@ public class EnemyMovement : MonoBehaviour
         }
 
         float currentSpeed = moveSpeed * slowMultiplier;
+        Vector3 previousPosition = transform.position;
         Vector3 targetPosition = pathManager.GetWaypointPosition(currentWaypointIndex);
 
         transform.position = Vector3.MoveTowards(transform.position, targetPosition, currentSpeed * Time.deltaTime);
+
+        UpdateFacingFromMovement(previousPosition, targetPosition);
 
         if (Vector3.Distance(transform.position, targetPosition) < 0.05f)
         {
             currentWaypointIndex++;
             UpdateProgress();
+            UpdateFacingFromNextWaypoint();
         }
     }
 
@@ -300,7 +305,9 @@ public class EnemyMovement : MonoBehaviour
         slowMultiplier = 1f;
         slowTimer = 0f;
         currentWaypointIndex = 0;
+
         lastHp = enemyHealth != null ? enemyHealth.CurrentHP : 0;
+
         ResetVisualState();
     }
 
@@ -310,7 +317,6 @@ public class EnemyMovement : MonoBehaviour
             return;
 
         spriteRenderer.color = originalColor;
-
         Color c = spriteRenderer.color;
         c.a = 1f;
         spriteRenderer.color = c;
@@ -328,6 +334,36 @@ public class EnemyMovement : MonoBehaviour
         }
 
         ProgressNormalized = Mathf.Clamp01((float)currentWaypointIndex / (pathManager.WaypointCount - 1));
+    }
+
+    private void UpdateFacingFromNextWaypoint()
+    {
+        if (spriteRenderer == null || pathManager == null)
+            return;
+
+        if (currentWaypointIndex >= pathManager.WaypointCount)
+            return;
+
+        Vector3 current = transform.position;
+        Vector3 next = pathManager.GetWaypointPosition(currentWaypointIndex);
+        ApplyFacingFromDelta(next.x - current.x);
+    }
+
+    private void UpdateFacingFromMovement(Vector3 from, Vector3 to)
+    {
+        if (spriteRenderer == null)
+            return;
+
+        ApplyFacingFromDelta(to.x - from.x);
+    }
+
+    private void ApplyFacingFromDelta(float deltaX)
+    {
+        if (Mathf.Abs(deltaX) < 0.0001f)
+            return;
+
+        bool faceRight = deltaX > 0f;
+        spriteRenderer.flipX = !faceRight;
     }
 
     private void RewardDefender()
