@@ -25,4 +25,4 @@ MonoBehaviour:
   slowDuration: 1.5
   icon: {fileID: -7132172409892320828, guid: c0a92499f8cd3024a9db1b891da5d08d, type: 3}
   towerPrefab: {fileID: 7077324161690391134, guid: 28ceb027ddcc3b94e83933982eec94b1, type: 3}
-  projectilePrefab: {fileID: 9206680111735461324, guid: cd1d07766d0a24a4eb042893871d40be, type: 3}
+  projectilePrefab: {fileID: 3300978348906608865, guid: a891cafa770a4ac45940953114a5afb1, type: 3}

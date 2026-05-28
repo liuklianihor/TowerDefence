@@ -1,9 +1,11 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class TowerBase : MonoBehaviour
 {
     [SerializeField] private TowerData towerData;
+
     private float nextAttackTime;
 
     public TowerData Data => towerData;
@@ -19,7 +21,8 @@ public class TowerBase : MonoBehaviour
         if (towerData == null)
             return;
 
-        if (GameStateManager.Instance != null && GameStateManager.Instance.CurrentPhase != GamePhase.Battle)
+        if (GameStateManager.Instance != null &&
+            GameStateManager.Instance.CurrentPhase != GamePhase.Battle)
             return;
 
         if (Time.time < nextAttackTime)
@@ -35,45 +38,45 @@ public class TowerBase : MonoBehaviour
 
     private void Attack(EnemyTarget target)
     {
-        if (towerData.attackMode == TowerAttackMode.Slow)
-        {
-            if (target.TryApplySlow(towerData.slowMultiplier, towerData.slowDuration))
-            {
-                if (towerData.projectilePrefab != null)
-                    SpawnProjectile(target, towerData.damage, true);
-            }
-            else
-            {
-                if (towerData.projectilePrefab != null)
-                    SpawnProjectile(target, towerData.damage, true);
-            }
-
+        if (target == null)
             return;
-        }
 
-        if (towerData.attackMode == TowerAttackMode.Splash)
-        {
-            if (towerData.projectilePrefab != null)
-                SpawnProjectile(target, towerData.damage, false, towerData.splashRadius);
-            else
-                ExplodeAt(target.transform.position, towerData.damage, towerData.splashRadius);
+        if (CombatFeedbackManager.Instance != null)
+            CombatFeedbackManager.Instance.PlayTowerShot(transform.position);
 
-            return;
-        }
+        float projectileSpeed = Mathf.Max(0.01f, towerData.range * 2f);
+        float distance = Vector3.Distance(transform.position, target.transform.position);
+        float travelTime = distance / projectileSpeed;
+
+        ProjectileImpactMode impactMode = towerData.attackMode == TowerAttackMode.Slow
+            ? ProjectileImpactMode.Slow
+            : ProjectileImpactMode.Damage;
 
         if (towerData.projectilePrefab != null)
-            SpawnProjectile(target, towerData.damage, false);
-        else
-            target.TakeDamage(towerData.damage);
+        {
+            SpawnProjectile(target, projectileSpeed, impactMode);
+            return;
+        }
+
+        StartCoroutine(DelayedFallbackImpact(
+            target,
+            towerData.damage,
+            travelTime,
+            impactMode,
+            towerData.slowMultiplier,
+            towerData.slowDuration,
+            towerData.splashRadius
+        ));
     }
 
-    private void SpawnProjectile(EnemyTarget target, int damage, bool applySlow, float splashRadius = 0f)
+    private void SpawnProjectile(EnemyTarget target, float projectileSpeed, ProjectileImpactMode impactMode)
     {
-        GameObject projectileObject = ObjectPool.Instance.Get(
-            towerData.projectilePrefab,
-            transform.position,
-            Quaternion.identity
-        );
+        GameObject projectileObject = null;
+
+        if (ObjectPool.Instance != null)
+            projectileObject = ObjectPool.Instance.Get(towerData.projectilePrefab, transform.position, Quaternion.identity);
+        else
+            projectileObject = Instantiate(towerData.projectilePrefab, transform.position, Quaternion.identity);
 
         if (projectileObject == null)
             return;
@@ -83,27 +86,59 @@ public class TowerBase : MonoBehaviour
         {
             projectile.Initialize(
                 target.transform,
-                damage,
-                towerData.projectileSpeed,
-                splashRadius,
-                applySlow ? ProjectileImpactMode.Slow : ProjectileImpactMode.Damage,
+                towerData.damage,
+                projectileSpeed,
+                towerData.splashRadius,
+                impactMode,
                 towerData.slowMultiplier,
                 towerData.slowDuration
             );
         }
     }
 
-    private void ExplodeAt(Vector3 position, int damage, float radius)
+    private IEnumerator DelayedFallbackImpact(
+        EnemyTarget target,
+        int damage,
+        float travelTime,
+        ProjectileImpactMode impactMode,
+        float slowMultiplier,
+        float slowDuration,
+        float splashRadius)
     {
-        Collider2D[] hits = Physics2D.OverlapCircleAll(position, radius <= 0f ? towerData.range : radius);
-        foreach (Collider2D hit in hits)
-        {
-            EnemyTarget enemy = hit.GetComponent<EnemyTarget>();
-            if (enemy == null)
-                continue;
+        yield return new WaitForSecondsRealtime(travelTime);
 
-            enemy.TakeDamage(damage);
+        if (target == null || !target.gameObject.activeInHierarchy)
+            yield break;
+
+        if (CombatFeedbackManager.Instance != null)
+            CombatFeedbackManager.Instance.PlayProjectileHit(target.transform.position);
+
+        if (impactMode == ProjectileImpactMode.Slow)
+        {
+            target.TryApplySlow(slowMultiplier, slowDuration);
+            target.TakeDamage(damage);
+            yield break;
         }
+
+        if (splashRadius > 0f)
+        {
+            Collider2D[] hits = Physics2D.OverlapCircleAll(target.transform.position, splashRadius);
+            for (int i = 0; i < hits.Length; i++)
+            {
+                if (hits[i] == null)
+                    continue;
+
+                EnemyTarget enemy = hits[i].GetComponent<EnemyTarget>();
+                if (enemy == null)
+                    continue;
+
+                enemy.TakeDamage(damage);
+            }
+
+            yield break;
+        }
+
+        target.TakeDamage(damage);
     }
 
     private EnemyTarget AcquireTarget()
@@ -113,7 +148,6 @@ public class TowerBase : MonoBehaviour
             return null;
 
         EnemyTarget bestTarget = null;
-
         float bestProgress = float.MinValue;
         float bestDistance = float.MaxValue;
         float farthestDistance = float.MinValue;

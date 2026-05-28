@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7247506320966029456}
   - component: {fileID: 8561884188308995377}
   - component: {fileID: 8409326507617384509}
+  - component: {fileID: 1000295823440898}
   m_Layer: 0
   m_Name: Base
   m_TagString: Untagged
@@ -121,6 +122,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BaseView
   spriteRenderer: {fileID: 8561884188308995377}
   baseSprite: {fileID: 6234176133674011997, guid: 32cb43c6e494133468450b6b61d7e0df, type: 3}
+--- !u!114 &1000295823440898
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1465745581094360338}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 430c8e44bdf08c74581f4a87e4db75b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BaseVisualFeedback
+  mainSprite: {fileID: 8561884188308995377}
+  destroyedSprite: {fileID: 4699183410865947342, guid: 9811225914dcac5468085b03f71a93f9, type: 3}
+  hitTint: {r: 1, g: 0.35, b: 0.35, a: 1}
+  flashDuration: 0.15
 --- !u!1 &5318979203372052821
 GameObject:
   m_ObjectHideFlags: 0

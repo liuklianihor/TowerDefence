@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 public class EnemyMovement : MonoBehaviour
@@ -6,6 +7,11 @@ public class EnemyMovement : MonoBehaviour
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 2f;
     [SerializeField] private SpriteRenderer spriteRenderer;
+
+    [Header("Hit / Death Feedback")]
+    [SerializeField] private float damageFlashDuration = 0.12f;
+    [SerializeField] private float deathFadeDuration = 0.5f;
+    [SerializeField] private Color damageTint = new Color(1f, 0.35f, 0.35f, 1f);
 
     private PathManager pathManager;
     private BaseHealth baseHealth;
@@ -18,6 +24,12 @@ public class EnemyMovement : MonoBehaviour
     private float slowMultiplier = 1f;
     private float slowTimer = 0f;
 
+    private Color originalColor;
+    private Sprite originalSprite;
+    private int lastHp;
+    private Coroutine flashRoutine;
+    private Coroutine fadeRoutine;
+
     public float ProgressNormalized { get; private set; }
     public int BaseDamage => enemyDefinition != null ? enemyDefinition.baseDamage : 1;
     public bool IgnoresFreezer => enemyDefinition != null && enemyDefinition.ignoresFreezer;
@@ -26,13 +38,43 @@ public class EnemyMovement : MonoBehaviour
 
     private void Awake()
     {
-        if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
-        enemyHealth = GetComponent<EnemyHealth>();
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>(true);
 
+        if (spriteRenderer != null)
+        {
+            originalColor = spriteRenderer.color;
+            originalSprite = spriteRenderer.sprite;
+        }
+
+        enemyHealth = GetComponent<EnemyHealth>();
         if (enemyHealth != null)
         {
             enemyHealth.OnDied += HandleDied;
+            enemyHealth.OnHealthChanged += HandleHealthChanged;
         }
+    }
+
+    private void OnEnable()
+    {
+        ResetReusableState();
+    }
+
+    private void OnDisable()
+    {
+        if (flashRoutine != null)
+        {
+            StopCoroutine(flashRoutine);
+            flashRoutine = null;
+        }
+
+        if (fadeRoutine != null)
+        {
+            StopCoroutine(fadeRoutine);
+            fadeRoutine = null;
+        }
+
+        ResetVisualState();
     }
 
     private void OnDestroy()
@@ -40,6 +82,7 @@ public class EnemyMovement : MonoBehaviour
         if (enemyHealth != null)
         {
             enemyHealth.OnDied -= HandleDied;
+            enemyHealth.OnHealthChanged -= HandleHealthChanged;
         }
     }
 
@@ -55,26 +98,31 @@ public class EnemyMovement : MonoBehaviour
         slowMultiplier = 1f;
         slowTimer = 0f;
 
-        if (enemyHealth == null) enemyHealth = GetComponent<EnemyHealth>();
+        if (enemyHealth == null)
+            enemyHealth = GetComponent<EnemyHealth>();
 
         if (enemyDefinition != null)
         {
             moveSpeed = enemyDefinition.moveSpeed;
 
-            if (spriteRenderer != null && enemyDefinition.sprite != null)
+            if (spriteRenderer != null)
             {
-                spriteRenderer.sprite = enemyDefinition.sprite;
+                if (enemyDefinition.sprite != null)
+                    spriteRenderer.sprite = enemyDefinition.sprite;
+                else if (originalSprite != null)
+                    spriteRenderer.sprite = originalSprite;
             }
 
             if (enemyHealth != null)
-            {
                 enemyHealth.Initialize(enemyDefinition);
-            }
         }
         else if (enemyHealth != null)
         {
             enemyHealth.ResetHealth();
         }
+
+        lastHp = enemyHealth != null ? enemyHealth.CurrentHP : 0;
+        UpdateProgress();
 
         if (pathManager != null && pathManager.WaypointCount > 0)
         {
@@ -83,17 +131,19 @@ public class EnemyMovement : MonoBehaviour
             UpdateProgress();
         }
 
-        gameObject.SetActive(true);
+        ResetVisualState();
     }
 
     private void Update()
     {
-        if (reachedEnd || pathManager == null) return;
+        if (reachedEnd || pathManager == null)
+            return;
 
         if (slowTimer > 0f)
         {
             slowTimer -= Time.deltaTime;
-            if (slowTimer <= 0f) slowMultiplier = 1f;
+            if (slowTimer <= 0f)
+                slowMultiplier = 1f;
         }
 
         if (currentWaypointIndex >= pathManager.WaypointCount)
@@ -116,48 +166,157 @@ public class EnemyMovement : MonoBehaviour
 
     public bool ApplySlow(float multiplier, float duration)
     {
-        if (IgnoresFreezer) return false;
+        if (IgnoresFreezer || isDespawning)
+            return false;
 
         slowMultiplier = Mathf.Clamp(multiplier, 0.1f, 1f);
         slowTimer = Mathf.Max(0f, duration);
         return true;
     }
 
+    private void HandleHealthChanged(int currentHp, int maxHp)
+    {
+        if (isDespawning)
+        {
+            lastHp = currentHp;
+            return;
+        }
+
+        if (currentHp < lastHp && currentHp > 0)
+        {
+            if (flashRoutine != null)
+                StopCoroutine(flashRoutine);
+
+            flashRoutine = StartCoroutine(FlashDamageRoutine());
+        }
+
+        lastHp = currentHp;
+    }
+
     private void HandleDied()
     {
+        if (isDespawning)
+            return;
+
         RewardDefender();
-        DespawnToPool();
+        BeginFadeOut(true);
     }
 
     private void ReachBase()
     {
-        if (reachedEnd) return;
+        if (reachedEnd || isDespawning)
+            return;
 
         reachedEnd = true;
 
         if (baseHealth != null)
-        {
             baseHealth.TakeDamage(BaseDamage);
+
+        BeginFadeOut(false);
+    }
+
+    private void BeginFadeOut(bool playDeathEffect)
+    {
+        if (isDespawning)
+            return;
+
+        isDespawning = true;
+
+        if (flashRoutine != null)
+        {
+            StopCoroutine(flashRoutine);
+            flashRoutine = null;
+        }
+
+        if (playDeathEffect && CombatFeedbackManager.Instance != null)
+            CombatFeedbackManager.Instance.PlayEnemyDeath(transform.position);
+
+        if (fadeRoutine != null)
+            StopCoroutine(fadeRoutine);
+
+        fadeRoutine = StartCoroutine(FadeOutThenDespawn());
+    }
+
+    private IEnumerator FlashDamageRoutine()
+    {
+        if (spriteRenderer == null)
+            yield break;
+
+        Color startColor = spriteRenderer.color;
+        spriteRenderer.color = damageTint;
+
+        yield return new WaitForSecondsRealtime(damageFlashDuration);
+
+        if (spriteRenderer != null && !isDespawning)
+            spriteRenderer.color = startColor;
+
+        flashRoutine = null;
+    }
+
+    private IEnumerator FadeOutThenDespawn()
+    {
+        if (spriteRenderer == null)
+        {
+            DespawnToPool();
+            yield break;
+        }
+
+        float elapsed = 0f;
+        Color startColor = spriteRenderer.color;
+
+        while (elapsed < deathFadeDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / deathFadeDuration);
+
+            Color c = startColor;
+            c.a = Mathf.Lerp(1f, 0f, t);
+            spriteRenderer.color = c;
+
+            yield return null;
         }
 
         DespawnToPool();
+        fadeRoutine = null;
     }
 
     public void DespawnToPool()
     {
-        if (isDespawning) return;
+        if (isDespawning == false)
+            isDespawning = true;
 
-        isDespawning = true;
         OnDespawned?.Invoke(this);
 
         if (ObjectPool.Instance != null)
-        {
             ObjectPool.Instance.Return(gameObject);
-        }
         else
-        {
             gameObject.SetActive(false);
-        }
+    }
+
+    private void ResetReusableState()
+    {
+        reachedEnd = false;
+        isDespawning = false;
+        slowMultiplier = 1f;
+        slowTimer = 0f;
+        currentWaypointIndex = 0;
+        lastHp = enemyHealth != null ? enemyHealth.CurrentHP : 0;
+        ResetVisualState();
+    }
+
+    private void ResetVisualState()
+    {
+        if (spriteRenderer == null)
+            return;
+
+        spriteRenderer.color = originalColor;
+
+        Color c = spriteRenderer.color;
+        c.a = 1f;
+        spriteRenderer.color = c;
+
+        if (originalSprite != null && (enemyDefinition == null || enemyDefinition.sprite == null))
+            spriteRenderer.sprite = originalSprite;
     }
 
     private void UpdateProgress()
@@ -173,11 +332,10 @@ public class EnemyMovement : MonoBehaviour
 
     private void RewardDefender()
     {
-        if (enemyDefinition == null) return;
+        if (enemyDefinition == null)
+            return;
 
         if (GameStateManager.Instance != null && GameStateManager.Instance.Economy != null)
-        {
             GameStateManager.Instance.Economy.AddGold(enemyDefinition.goldReward);
-        }
     }
 }
