@@ -13,7 +13,7 @@ public class WaveComposer : MonoBehaviour
         if (enemyCatalog == null || enemyCatalog.Count == 0 || attackBudget <= 0 || maxEnemies <= 0)
             return wave;
 
-        List<EnemyDefinition> orderedCatalog = new List<EnemyDefinition>();
+        var orderedCatalog = new List<EnemyDefinition>();
         for (int i = 0; i < enemyCatalog.Count; i++)
         {
             EnemyDefinition enemy = enemyCatalog[i];

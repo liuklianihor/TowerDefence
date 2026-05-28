@@ -213,7 +213,7 @@ public class GameHUD : MonoBehaviour
     private void OnAttackBudgetChanged(int budget, int startingBudget)
     {
         if (attackBudgetText != null)
-            attackBudgetText.text = $"Attack: {budget}";
+            attackBudgetText.text = $"Attack Budget: {budget}";
     }
 
     private void OnRoundChanged(int currentRound, int totalRounds)
