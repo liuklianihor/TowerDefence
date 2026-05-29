@@ -25,20 +25,15 @@ public class TowerBase : MonoBehaviour
 
     private void Update()
     {
-        if (towerData == null)
-            return;
-
-        if (GameStateManager.Instance != null && GameStateManager.Instance.CurrentPhase != GamePhase.Battle)
-            return;
+        if (towerData == null) return;
+        if (GameStateManager.Instance != null && GameStateManager.Instance.CurrentPhase != GamePhase.Battle) return;
 
         EnemyTarget target = AcquireTarget();
-        if (target == null)
-            return;
+        if (target == null) return;
 
         UpdateFacing(target.transform.position);
 
-        if (Time.time < nextAttackTime)
-            return;
+        if (Time.time < nextAttackTime) return;
 
         Attack(target);
         nextAttackTime = Time.time + towerData.cooldown;
@@ -58,20 +53,18 @@ public class TowerBase : MonoBehaviour
 
     private void Attack(EnemyTarget target)
     {
-        if (target == null)
-            return;
+        if (target == null) return;
 
         if (CombatFeedbackManager.Instance != null)
-            CombatFeedbackManager.Instance.PlayTowerShot(transform.position);
+            CombatFeedbackManager.Instance.PlayClip(towerData.attackClip);
 
         float projectileSpeed = Mathf.Max(0.01f, towerData.range * 2f);
         float distance = Vector3.Distance(transform.position, target.transform.position);
         float travelTime = distance / projectileSpeed;
 
-        ProjectileImpactMode impactMode =
-            towerData.attackMode == TowerAttackMode.Slow
-                ? ProjectileImpactMode.Slow
-                : ProjectileImpactMode.Damage;
+        ProjectileImpactMode impactMode = towerData.attackMode == TowerAttackMode.Slow
+            ? ProjectileImpactMode.Slow
+            : ProjectileImpactMode.Damage;
 
         if (towerData.projectilePrefab != null)
         {
@@ -86,7 +79,8 @@ public class TowerBase : MonoBehaviour
             impactMode,
             towerData.slowMultiplier,
             towerData.slowDuration,
-            towerData.splashRadius));
+            towerData.splashRadius
+        ));
     }
 
     private void SpawnProjectile(EnemyTarget target, float projectileSpeed, ProjectileImpactMode impactMode)
@@ -98,8 +92,7 @@ public class TowerBase : MonoBehaviour
         else
             projectileObject = Instantiate(towerData.projectilePrefab, transform.position, Quaternion.identity);
 
-        if (projectileObject == null)
-            return;
+        if (projectileObject == null) return;
 
         TowerProjectile projectile = projectileObject.GetComponent<TowerProjectile>();
         if (projectile != null)
@@ -146,13 +139,10 @@ public class TowerBase : MonoBehaviour
             for (int i = 0; i < hits.Length; i++)
             {
                 if (hits[i] == null) continue;
-
                 EnemyTarget enemy = hits[i].GetComponent<EnemyTarget>();
                 if (enemy == null) continue;
-
                 enemy.TakeDamage(damage);
             }
-
             yield break;
         }
 
@@ -162,8 +152,7 @@ public class TowerBase : MonoBehaviour
     private EnemyTarget AcquireTarget()
     {
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, towerData.range);
-        if (hits == null || hits.Length == 0)
-            return null;
+        if (hits == null || hits.Length == 0) return null;
 
         EnemyTarget bestTarget = null;
         float bestProgress = float.MinValue;
@@ -175,8 +164,7 @@ public class TowerBase : MonoBehaviour
         for (int i = 0; i < hits.Length; i++)
         {
             EnemyTarget enemy = hits[i].GetComponent<EnemyTarget>();
-            if (enemy == null || enemy.IsDead)
-                continue;
+            if (enemy == null || enemy.IsDead) continue;
 
             float progress = enemy.ProgressNormalized;
             float distance = Vector2.Distance(transform.position, enemy.transform.position);

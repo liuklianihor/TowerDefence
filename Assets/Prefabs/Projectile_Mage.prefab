@@ -80,7 +80,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 10
+  m_SortingOrder: 21
   m_MaskInteraction: 0
   m_Sprite: {fileID: -2501357349151425335, guid: 27b41de5dbc056043bc71c8d7d800684, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -105,4 +105,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerProjectile
   hitDistance: 0.1
-  spriteRenderer: {fileID: 8571667208638266653}
+  rotationOffsetDegrees: 0

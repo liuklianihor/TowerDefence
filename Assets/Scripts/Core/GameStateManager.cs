@@ -16,6 +16,7 @@ public class GameStateManager : MonoBehaviour
     [SerializeField] private EnemySpawner enemySpawner;
     [SerializeField] private WaveComposer waveComposer;
     [SerializeField] private TowerPlacementController towerPlacementController;
+    [SerializeField] private CombatFeedbackManager combatFeedback;
 
     [Header("Wave")]
     [SerializeField] private float spawnInterval = 1f;
@@ -51,11 +52,10 @@ public class GameStateManager : MonoBehaviour
         if (enemySpawner == null) enemySpawner = FindFirstObjectByType<EnemySpawner>();
         if (waveComposer == null) waveComposer = FindFirstObjectByType<WaveComposer>();
         if (towerPlacementController == null) towerPlacementController = FindFirstObjectByType<TowerPlacementController>();
+        if (combatFeedback == null) combatFeedback = FindFirstObjectByType<CombatFeedbackManager>();
 
         if (baseHealth != null)
-        {
             baseHealth.OnBaseDestroyed += HandleBaseDestroyed;
-        }
 
         StartNewGame();
     }
@@ -63,20 +63,15 @@ public class GameStateManager : MonoBehaviour
     private void OnDestroy()
     {
         if (baseHealth != null)
-        {
             baseHealth.OnBaseDestroyed -= HandleBaseDestroyed;
-        }
 
         if (Instance == this)
-        {
             Instance = null;
-        }
     }
 
     public void StartNewGame()
     {
         currentRound = 1;
-
         enemySpawner?.StopWave(true);
         towerPlacementController?.ResetForNewGame();
         baseHealth?.ResetBase();
@@ -124,6 +119,8 @@ public class GameStateManager : MonoBehaviour
 
         economy.BurnAttackBudget();
         SetPhase(GamePhase.Battle);
+
+        combatFeedback?.PlayNewRound();
         enemySpawner.StartWave(currentWave, spawnInterval);
     }
 
@@ -159,8 +156,13 @@ public class GameStateManager : MonoBehaviour
 
         currentWave.Clear();
         enemySpawner?.StopWave(true);
-
         SetPhase(GamePhase.GameOver);
+
+        if (defenderWon)
+            combatFeedback?.PlayVictory();
+        else
+            combatFeedback?.PlayDefeat();
+
         Time.timeScale = 1f;
         OnGameEnded?.Invoke(defenderWon);
     }
@@ -178,7 +180,6 @@ public class GameStateManager : MonoBehaviour
     private void SetPhase(GamePhase phase)
     {
         if (CurrentPhase == phase) return;
-
         CurrentPhase = phase;
         OnPhaseChanged?.Invoke(CurrentPhase);
     }

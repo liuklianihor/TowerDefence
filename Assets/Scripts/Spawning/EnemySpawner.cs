@@ -37,10 +37,9 @@ public class EnemySpawner : MonoBehaviour
         if (wave == null || wave.Count == 0) return;
 
         StopWave(true);
-
         spawnInterval = interval;
-        queue.Clear();
 
+        queue.Clear();
         for (int i = 0; i < wave.Count; i++)
         {
             if (wave[i] == null || wave[i].Enemy == null) continue;
@@ -67,9 +66,7 @@ public class EnemySpawner : MonoBehaviour
             {
                 EnemyMovement enemy = snapshot[i];
                 if (enemy != null)
-                {
                     enemy.DespawnToPool();
-                }
             }
         }
         else
@@ -77,9 +74,7 @@ public class EnemySpawner : MonoBehaviour
             foreach (var enemy in activeEnemies)
             {
                 if (enemy != null)
-                {
                     enemy.OnDespawned -= HandleEnemyDespawned;
-                }
             }
         }
 
@@ -106,14 +101,12 @@ public class EnemySpawner : MonoBehaviour
             return;
 
         EnemySpawnEntry entry = queue.Dequeue();
-        if (entry == null || entry.Enemy == null) return;
+        if (entry == null || entry.Enemy == null)
+            return;
 
-        GameObject prefabToSpawn = null;
-
-        if (entry.Enemy.enemyPrefab != null)
-            prefabToSpawn = entry.Enemy.enemyPrefab;
-        else if (enemyPrefab != null)
-            prefabToSpawn = enemyPrefab.gameObject;
+        GameObject prefabToSpawn = entry.Enemy.enemyPrefab != null ? entry.Enemy.enemyPrefab
+                               : enemyPrefab != null ? enemyPrefab.gameObject
+                               : null;
 
         if (prefabToSpawn == null)
         {
@@ -128,19 +121,19 @@ public class EnemySpawner : MonoBehaviour
         if (enemy == null)
             enemy = enemyObject.GetComponentInChildren<EnemyMovement>();
 
-        if (enemy != null)
-        {
-            if (activeEnemies.Add(enemy))
-            {
-                enemy.OnDespawned += HandleEnemyDespawned;
-            }
-
-            enemy.Initialize(pathManager, baseHealth, entry.Enemy);
-        }
-        else
+        if (enemy == null)
         {
             Debug.LogError($"EnemySpawner: prefab '{prefabToSpawn.name}' does not contain EnemyMovement.");
+            return;
         }
+
+        if (activeEnemies.Add(enemy))
+            enemy.OnDespawned += HandleEnemyDespawned;
+
+        enemy.Initialize(pathManager, baseHealth, entry.Enemy);
+
+        if (CombatFeedbackManager.Instance != null)
+            CombatFeedbackManager.Instance.PlayClip(entry.Enemy.spawnClip);
     }
 
     private void HandleEnemyDespawned(EnemyMovement enemy)
@@ -159,7 +152,6 @@ public class EnemySpawner : MonoBehaviour
         if (spawnRoutine != null) return;
         if (queue.Count > 0) return;
         if (activeEnemies.Count > 0) return;
-
         if (GameStateManager.Instance == null) return;
         if (GameStateManager.Instance.CurrentPhase != GamePhase.Battle) return;
         if (GameStateManager.Instance.IsBaseDestroyed) return;

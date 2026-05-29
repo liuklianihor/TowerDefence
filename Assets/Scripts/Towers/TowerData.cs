@@ -18,7 +18,6 @@ public class TowerData : ScriptableObject
     [Header("Special")]
     public TowerAttackMode attackMode = TowerAttackMode.SingleTarget;
     public TowerTargetMode targetMode = TowerTargetMode.Progress;
-
     [Min(0f)] public float splashRadius = 0f;
     [Range(0.1f, 1f)] public float slowMultiplier = 0.5f;
     [Min(0f)] public float slowDuration = 1.5f;
@@ -27,4 +26,7 @@ public class TowerData : ScriptableObject
     public Sprite icon;
     public TowerBase towerPrefab;
     public GameObject projectilePrefab;
+
+    [Header("Audio")]
+    public AudioClip attackClip; 
 }

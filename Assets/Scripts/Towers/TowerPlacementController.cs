@@ -10,6 +10,7 @@ public class TowerPlacementController : MonoBehaviour
     [SerializeField] private GridManager gridManager;
     [SerializeField] private GameEconomy economy;
     [SerializeField] private GameStateManager gameStateManager;
+    [SerializeField] private CombatFeedbackManager combatFeedback;
 
     [Header("Tower")]
     [SerializeField] private TowerData defaultTower;
@@ -25,8 +26,8 @@ public class TowerPlacementController : MonoBehaviour
         public int cost;
     }
 
-    private readonly Dictionary<Vector2Int, PlacedTowerInfo> placedTowers = new Dictionary<Vector2Int, PlacedTowerInfo>();
-    private readonly HashSet<Vector2Int> occupiedCells = new HashSet<Vector2Int>();
+    private readonly Dictionary<Vector2Int, PlacedTowerInfo> placedTowers = new();
+    private readonly HashSet<Vector2Int> occupiedCells = new();
 
     public TowerData SelectedTower { get; private set; }
     public TowerData DefaultTower => defaultTower;
@@ -34,20 +35,20 @@ public class TowerPlacementController : MonoBehaviour
 
     private void Awake()
     {
-        if (worldCamera == null)
-            worldCamera = Camera.main;
+        if (worldCamera == null) worldCamera = Camera.main;
+        if (gridManager == null) gridManager = FindFirstObjectByType<GridManager>();
+        if (economy == null) economy = FindFirstObjectByType<GameEconomy>();
+        if (gameStateManager == null) gameStateManager = FindFirstObjectByType<GameStateManager>();
+        if (combatFeedback == null) combatFeedback = FindFirstObjectByType<CombatFeedbackManager>();
 
         if (towerRoot == null)
         {
             GameObject existingRoot = GameObject.Find("Towers");
-            if (existingRoot == null)
-                existingRoot = new GameObject("Towers");
-
+            if (existingRoot == null) existingRoot = new GameObject("Towers");
             towerRoot = existingRoot.transform;
         }
 
-        if (SelectedTower == null)
-            SelectedTower = defaultTower;
+        if (SelectedTower == null) SelectedTower = defaultTower;
     }
 
     private void Update()
@@ -66,9 +67,7 @@ public class TowerPlacementController : MonoBehaviour
 
     public void SelectTower(TowerData towerData)
     {
-        if (towerData == null)
-            return;
-
+        if (towerData == null) return;
         SelectedTower = towerData;
     }
 
@@ -80,7 +79,6 @@ public class TowerPlacementController : MonoBehaviour
     public bool TryPlaceTowerAtMouse()
     {
         TowerData towerData = ActiveTowerData;
-
         if (towerData == null || worldCamera == null || gridManager == null || towerData.towerPrefab == null)
             return false;
 
@@ -99,27 +97,13 @@ public class TowerPlacementController : MonoBehaviour
         if (gridManager == null || towerData == null || towerData.towerPrefab == null)
             return false;
 
-        if (!gridManager.IsInsideGrid(cell))
-            return false;
-
-        if (gridManager.IsPathCell(cell))
-            return false;
-
-        if (occupiedCells.Contains(cell))
-            return false;
-
-        if (economy != null && !economy.SpendGold(towerData.cost))
-            return false;
+        if (!gridManager.IsInsideGrid(cell)) return false;
+        if (gridManager.IsPathCell(cell)) return false;
+        if (occupiedCells.Contains(cell)) return false;
+        if (economy != null && !economy.SpendGold(towerData.cost)) return false;
 
         Vector3 worldPos = gridManager.GridToWorld(cell);
-
-        TowerBase tower = Instantiate(
-            towerData.towerPrefab,
-            worldPos,
-            Quaternion.identity,
-            towerRoot
-        );
-
+        TowerBase tower = Instantiate(towerData.towerPrefab, worldPos, Quaternion.identity, towerRoot);
         tower.Initialize(towerData);
 
         occupiedCells.Add(cell);
@@ -130,26 +114,19 @@ public class TowerPlacementController : MonoBehaviour
             cost = towerData.cost
         };
 
+        if (combatFeedback != null)
+            combatFeedback.PlayTowerPlace();
+
         return true;
     }
 
     public bool CanPlaceTower(Vector2Int cell, TowerData towerData)
     {
-        if (gridManager == null || towerData == null)
-            return false;
-
-        if (!gridManager.IsInsideGrid(cell))
-            return false;
-
-        if (gridManager.IsPathCell(cell))
-            return false;
-
-        if (occupiedCells.Contains(cell))
-            return false;
-
-        if (economy != null && !economy.CanSpendGold(towerData.cost))
-            return false;
-
+        if (gridManager == null || towerData == null) return false;
+        if (!gridManager.IsInsideGrid(cell)) return false;
+        if (gridManager.IsPathCell(cell)) return false;
+        if (occupiedCells.Contains(cell)) return false;
+        if (economy != null && !economy.CanSpendGold(towerData.cost)) return false;
         return true;
     }
 
@@ -171,23 +148,17 @@ public class TowerPlacementController : MonoBehaviour
     private bool ClearPlacedTowersInternal(bool refund, bool ignorePhaseCheck)
     {
         if (!ignorePhaseCheck && gameStateManager != null && gameStateManager.CurrentPhase != GamePhase.Preparation)
-        {
             return false;
-        }
 
         int refundAmount = 0;
 
         foreach (PlacedTowerInfo info in placedTowers.Values)
         {
             if (info.tower != null)
-            {
                 Destroy(info.tower.gameObject);
-            }
 
             if (refund)
-            {
                 refundAmount += Mathf.Max(0, info.cost);
-            }
         }
 
         placedTowers.Clear();
@@ -195,9 +166,7 @@ public class TowerPlacementController : MonoBehaviour
         SelectedTower = defaultTower;
 
         if (refund && economy != null && refundAmount > 0)
-        {
             economy.AddGold(refundAmount);
-        }
 
         return true;
     }

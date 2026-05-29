@@ -16,7 +16,7 @@ MonoBehaviour:
   cost: 200
   range: 5
   cooldown: 2
-  damage: 75
+  damage: 80
   projectileSpeed: 8
   attackMode: 0
   targetMode: 0
@@ -26,3 +26,4 @@ MonoBehaviour:
   icon: {fileID: -6809907661698028246, guid: 5221a23cfb7e85945a01f3b9d550ecf4, type: 3}
   towerPrefab: {fileID: 8539958626567370805, guid: 3d53411b7f4ceee469e410190c85ff21, type: 3}
   projectilePrefab: {fileID: 4717401491108044839, guid: 6db7042e408e1714c8ff901a158f885f, type: 3}
+  attackClip: {fileID: 8300000, guid: 900a7872018a05240abc737319342179, type: 3}

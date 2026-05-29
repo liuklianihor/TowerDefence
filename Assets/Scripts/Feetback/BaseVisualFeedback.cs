@@ -15,6 +15,7 @@ public class BaseVisualFeedback : MonoBehaviour
     private int lastHp;
     private bool destroyedShown;
     private Coroutine flashRoutine;
+    private bool isHitFlashActive;
 
     private void Awake()
     {
@@ -40,6 +41,7 @@ public class BaseVisualFeedback : MonoBehaviour
         }
 
         destroyedShown = false;
+        isHitFlashActive = false;
         ResetVisualState();
     }
 
@@ -56,6 +58,8 @@ public class BaseVisualFeedback : MonoBehaviour
             StopCoroutine(flashRoutine);
             flashRoutine = null;
         }
+
+        isHitFlashActive = false;
     }
 
     private void HandleHealthChanged(int currentHp, int maxHp)
@@ -79,10 +83,9 @@ public class BaseVisualFeedback : MonoBehaviour
             if (CombatFeedbackManager.Instance != null)
                 CombatFeedbackManager.Instance.PlayBaseHit(transform.position);
 
-            if (flashRoutine != null)
-                StopCoroutine(flashRoutine);
-
-            flashRoutine = StartCoroutine(FlashRoutine());
+            // Захист тільки від повторного flash-сигналу
+            if (!isHitFlashActive)
+                flashRoutine = StartCoroutine(FlashRoutine());
         }
 
         lastHp = currentHp;
@@ -104,6 +107,8 @@ public class BaseVisualFeedback : MonoBehaviour
             flashRoutine = null;
         }
 
+        isHitFlashActive = false;
+
         if (mainSprite != null && destroyedSprite != null)
             mainSprite.sprite = destroyedSprite;
     }
@@ -113,14 +118,15 @@ public class BaseVisualFeedback : MonoBehaviour
         if (mainSprite == null)
             yield break;
 
-        Color startColor = mainSprite.color;
+        isHitFlashActive = true;
         mainSprite.color = hitTint;
 
         yield return new WaitForSecondsRealtime(flashDuration);
 
         if (mainSprite != null)
-            mainSprite.color = startColor;
+            mainSprite.color = originalColor;
 
+        isHitFlashActive = false;
         flashRoutine = null;
     }
 

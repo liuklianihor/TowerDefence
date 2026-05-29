@@ -6,11 +6,16 @@ public class CombatFeedbackManager : MonoBehaviour
 
     [Header("Audio")]
     [SerializeField] private AudioSource sfxSource;
+
     [SerializeField] private AudioClip towerShotClip;
     [SerializeField] private AudioClip projectileHitClip;
     [SerializeField] private AudioClip enemyDeathClip;
     [SerializeField] private AudioClip baseHitClip;
     [SerializeField] private AudioClip baseDestroyClip;
+    [SerializeField] private AudioClip towerPlaceClip;
+    [SerializeField] private AudioClip newRoundClip;
+    [SerializeField] private AudioClip victoryClip;
+    [SerializeField] private AudioClip defeatClip;
 
     [Header("VFX Prefabs")]
     [SerializeField] private GameObject towerShotVfxPrefab;
@@ -31,58 +36,72 @@ public class CombatFeedbackManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    public void PlayClip(AudioClip clip)
+    {
+        if (clip == null || sfxSource == null)
+            return;
+
+        sfxSource.PlayOneShot(clip);
+    }
+
     public void PlayTowerShot(Vector3 position)
     {
-        PlayFeedback(towerShotClip, towerShotVfxPrefab, position);
+        PlayClip(towerShotClip);
+        PlayVfx(towerShotVfxPrefab, position);
     }
 
     public void PlayProjectileHit(Vector3 position)
     {
-        PlayFeedback(projectileHitClip, projectileHitVfxPrefab, position);
+        PlayClip(projectileHitClip);
+        PlayVfx(projectileHitVfxPrefab, position);
     }
 
     public void PlayEnemyDeath(Vector3 position)
     {
-        PlayFeedback(enemyDeathClip, enemyDeathVfxPrefab, position);
+        PlayClip(enemyDeathClip);
+        PlayVfx(enemyDeathVfxPrefab, position);
     }
 
     public void PlayBaseHit(Vector3 position)
     {
-        PlayFeedback(baseHitClip, baseHitVfxPrefab, position);
+        PlayClip(baseHitClip);
+        PlayVfx(baseHitVfxPrefab, position);
     }
 
     public void PlayBaseDestroyed(Vector3 position)
     {
-        PlayFeedback(baseDestroyClip, baseDestroyVfxPrefab, position);
+        PlayClip(baseDestroyClip);
+        PlayVfx(baseDestroyVfxPrefab, position);
     }
 
-    private void PlayFeedback(AudioClip clip, GameObject prefab, Vector3 position)
+    public void PlayTowerPlace()
     {
-        if (clip != null && sfxSource != null)
-        {
-            sfxSource.PlayOneShot(clip);
-        }
+        PlayClip(towerPlaceClip);
+    }
 
+    public void PlayNewRound()
+    {
+        PlayClip(newRoundClip);
+    }
+
+    public void PlayVictory()
+    {
+        PlayClip(victoryClip);
+    }
+
+    public void PlayDefeat()
+    {
+        PlayClip(defeatClip);
+    }
+
+    private void PlayVfx(GameObject prefab, Vector3 position)
+    {
         if (prefab == null)
             return;
 
-        GameObject instance = null;
-
         if (ObjectPool.Instance != null)
-        {
-            instance = ObjectPool.Instance.Get(prefab, position, Quaternion.identity);
-        }
+            ObjectPool.Instance.Get(prefab, position, Quaternion.identity);
         else
-        {
-            instance = Instantiate(prefab, position, Quaternion.identity);
-        }
-
-        if (instance == null)
-            return;
-
-        if (instance.TryGetComponent<PooledParticleAutoReturn>(out _))
-            return;
-
-        instance.AddComponent<PooledParticleAutoReturn>();
+            Instantiate(prefab, position, Quaternion.identity);
     }
 }

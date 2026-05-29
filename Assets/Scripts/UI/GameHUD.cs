@@ -11,16 +11,23 @@ public class GameHUD : MonoBehaviour
     [SerializeField] private TowerPlacementController towerPlacementController;
     [SerializeField] private BaseHealth baseHealth;
 
-    [Header("UI Text")]
-    [SerializeField] private TMP_Text goldText;
-    [SerializeField] private TMP_Text attackBudgetText;
-    [SerializeField] private TMP_Text baseHpText;
-    [SerializeField] private TMP_Text roundText;
-    [SerializeField] private TMP_Text phaseText;
+    [Header("Value Texts")]
+    [SerializeField] private TMP_Text goldValueText;
+    [SerializeField] private TMP_Text attackBudgetValueText;
+    [SerializeField] private TMP_Text baseHpValueText;
+    [SerializeField] private TMP_Text roundValueText;
+    [SerializeField] private TMP_Text phaseValueText;
 
-    [Header("Game Over Texts")]
-    [SerializeField] private TMP_Text victoryText;
-    [SerializeField] private TMP_Text defeatText;
+    [Header("Label Images")]
+    [SerializeField] private Image goldLabelImage;
+    [SerializeField] private Image attackBudgetLabelImage;
+    [SerializeField] private Image hpLabelImage;
+    [SerializeField] private Image roundLabelImage;
+    [SerializeField] private Image phaseLabelImage;
+
+    [Header("Game Over Images")]
+    [SerializeField] private Image victoryImage;
+    [SerializeField] private Image defeatImage;
 
     [Header("Buttons")]
     [SerializeField] private Button startBattleButton;
@@ -33,8 +40,8 @@ public class GameHUD : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
-        AutoBindButtons();
         WireButtons();
+        HideGameOverImages();
     }
 
     private void OnEnable()
@@ -72,29 +79,6 @@ public class GameHUD : MonoBehaviour
         if (baseHealth == null) baseHealth = FindFirstObjectByType<BaseHealth>();
     }
 
-    private void AutoBindButtons()
-    {
-        if (restartButton == null)
-        {
-            Button[] buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
-            for (int i = 0; i < buttons.Length; i++)
-            {
-                Button btn = buttons[i];
-                if (btn == null) continue;
-
-                TMP_Text label = btn.GetComponentInChildren<TMP_Text>(true);
-                if (label == null) continue;
-
-                string text = label.text.Trim().ToLowerInvariant();
-                if (text.Contains("restart") || text.Contains("рестарт") || text.Contains("replay"))
-                {
-                    restartButton = btn;
-                    break;
-                }
-            }
-        }
-    }
-
     private void WireButtons()
     {
         if (startBattleButton != null)
@@ -107,7 +91,6 @@ public class GameHUD : MonoBehaviour
         {
             restartButton.onClick.RemoveListener(OnRestartPressed);
             restartButton.onClick.AddListener(OnRestartPressed);
-            restartButton.interactable = true;
         }
 
         if (clearSelectionButton != null)
@@ -206,26 +189,26 @@ public class GameHUD : MonoBehaviour
 
     private void OnGoldChanged(int gold, int startingGold)
     {
-        if (goldText != null)
-            goldText.text = $"Gold: {gold}";
+        if (goldValueText != null)
+            goldValueText.text = gold.ToString();
     }
 
     private void OnAttackBudgetChanged(int budget, int startingBudget)
     {
-        if (attackBudgetText != null)
-            attackBudgetText.text = $"Attack Budget: {budget}";
+        if (attackBudgetValueText != null)
+            attackBudgetValueText.text = budget.ToString();
     }
 
     private void OnRoundChanged(int currentRound, int totalRounds)
     {
-        if (roundText != null)
-            roundText.text = $"Round: {currentRound}/{totalRounds}";
+        if (roundValueText != null)
+            roundValueText.text = $"{currentRound}/{totalRounds}";
     }
 
     private void OnPhaseChanged(GamePhase phase)
     {
-        if (phaseText != null)
-            phaseText.text = $"Phase: {phase}";
+        if (phaseValueText != null)
+            phaseValueText.text = phase.ToString();
 
         if (startBattleButton != null)
             startBattleButton.interactable = phase == GamePhase.Preparation;
@@ -233,63 +216,66 @@ public class GameHUD : MonoBehaviour
         bool showGameOver = phase == GamePhase.GameOver;
 
         if (restartButton != null)
-        {
             restartButton.gameObject.SetActive(showGameOver);
-            restartButton.interactable = showGameOver;
-            restartButton.transform.SetAsLastSibling();
-        }
 
         if (gameOverPanel != null)
             gameOverPanel.SetActive(showGameOver);
+
+        if (!showGameOver)
+            HideGameOverImages();
     }
 
     private void OnGameEnded(bool defenderWon)
     {
-        if (victoryText != null)
-            victoryText.gameObject.SetActive(defenderWon);
+        if (victoryImage != null)
+            victoryImage.gameObject.SetActive(defenderWon);
 
-        if (defeatText != null)
-            defeatText.gameObject.SetActive(!defenderWon);
+        if (defeatImage != null)
+            defeatImage.gameObject.SetActive(!defenderWon);
 
         if (gameOverPanel != null)
             gameOverPanel.SetActive(true);
 
         if (restartButton != null)
-        {
             restartButton.gameObject.SetActive(true);
-            restartButton.interactable = true;
-            restartButton.transform.SetAsLastSibling();
-        }
+    }
+
+    private void HideGameOverImages()
+    {
+        if (victoryImage != null)
+            victoryImage.gameObject.SetActive(false);
+
+        if (defeatImage != null)
+            defeatImage.gameObject.SetActive(false);
     }
 
     private void OnBaseHealthChanged(int currentHp, int maxHp)
     {
         UpdateBaseHpText(currentHp, maxHp);
 
-        if (currentHp <= 0 &&
-            gameStateManager != null &&
-            gameStateManager.CurrentPhase != GamePhase.GameOver)
-        {
+        if (currentHp <= 0 && gameStateManager != null && gameStateManager.CurrentPhase != GamePhase.GameOver)
             gameStateManager.GameOver(false);
-        }
     }
 
     private void RefreshBaseHealth()
     {
-        if (baseHealth == null || baseHpText == null) return;
+        if (baseHealth == null || baseHpValueText == null)
+            return;
+
         UpdateBaseHpText(baseHealth.CurrentHP, baseHealth.MaxHP);
     }
 
     private void UpdateBaseHpText(int currentHp, int maxHp)
     {
-        if (baseHpText == null) return;
-        baseHpText.text = $"HP: {Mathf.Max(0, currentHp)}/{Mathf.Max(1, maxHp)}";
+        if (baseHpValueText == null)
+            return;
+
+        baseHpValueText.text = $"{Mathf.Max(0, currentHp)}/{Mathf.Max(1, maxHp)}";
     }
 
     public void OnStartBattlePressed()
     {
-        if (gameStateManager != null)
-            gameStateManager.StartBattle();
+        gameStateManager?.StartBattle();
     }
 
     public void OnRestartPressed()

@@ -31,6 +31,7 @@ public class EnemyMovement : MonoBehaviour
     private int lastHp;
     private Coroutine flashRoutine;
     private Coroutine fadeRoutine;
+    private bool isDamageFlashActive;
 
     public float ProgressNormalized { get; private set; }
     public int BaseDamage => enemyDefinition != null ? enemyDefinition.baseDamage : 1;
@@ -189,10 +190,8 @@ public class EnemyMovement : MonoBehaviour
 
         if (currentHp < lastHp && currentHp > 0)
         {
-            if (flashRoutine != null)
-                StopCoroutine(flashRoutine);
-
-            flashRoutine = StartCoroutine(FlashDamageRoutine());
+            if (!isDamageFlashActive)
+                flashRoutine = StartCoroutine(FlashDamageRoutine());
         }
 
         lastHp = currentHp;
@@ -227,6 +226,8 @@ public class EnemyMovement : MonoBehaviour
 
         isDespawning = true;
 
+        isDamageFlashActive = false;
+
         if (flashRoutine != null)
         {
             StopCoroutine(flashRoutine);
@@ -247,14 +248,15 @@ public class EnemyMovement : MonoBehaviour
         if (spriteRenderer == null)
             yield break;
 
-        Color startColor = spriteRenderer.color;
-        spriteRenderer.color = damageTint;
+        isDamageFlashActive = true;
 
+        spriteRenderer.color = damageTint;
         yield return new WaitForSecondsRealtime(damageFlashDuration);
 
         if (spriteRenderer != null && !isDespawning)
-            spriteRenderer.color = startColor;
+            spriteRenderer.color = originalColor;
 
+        isDamageFlashActive = false;
         flashRoutine = null;
     }
 

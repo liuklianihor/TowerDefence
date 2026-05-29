@@ -20,6 +20,9 @@ public class EnemyDefinition : ScriptableObject
     [Header("Visuals")]
     [SerializeField] public Sprite sprite;
     public GameObject enemyPrefab;
+
+    [Header("Audio")]
+    public AudioClip spawnClip;
 }
 
 [Serializable]

@@ -21,3 +21,4 @@ MonoBehaviour:
   ignoresFreezer: 1
   sprite: {fileID: -5899927303015767666, guid: 11bde662b44cf154eb70d24679ae3278, type: 3}
   enemyPrefab: {fileID: 4976099318046384748, guid: 31b8292d45a471a4886fedb079026882, type: 3}
+  spawnClip: {fileID: 8300000, guid: 48021238fd3202f47bbd336e9e421278, type: 3}
