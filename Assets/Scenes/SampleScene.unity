@@ -397,7 +397,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 470, y: 300}
+  m_AnchoredPosition: {x: 470, y: 330}
   m_SizeDelta: {x: 320, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &138554057
@@ -1163,7 +1163,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 470, y: 300}
+  m_AnchoredPosition: {x: 470, y: 330}
   m_SizeDelta: {x: 320, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &484149308
@@ -1329,7 +1329,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 470, y: 400}
+  m_AnchoredPosition: {x: 470, y: 430}
   m_SizeDelta: {x: 320, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &508708741
@@ -1699,7 +1699,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameEconomy
   startingGold: 300
   startingAttackBudget: 200
-  attackBudgetIncreasePerRound: 50
+  attackBudgetIncreasePerRound: 80
 --- !u!114 &557681377
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2528,7 +2528,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 470, y: 400}
+  m_AnchoredPosition: {x: 470, y: 430}
   m_SizeDelta: {x: 320, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &743726689
@@ -4451,7 +4451,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 470, y: 150}
+  m_AnchoredPosition: {x: 470, y: 195}
   m_SizeDelta: {x: 280, y: 152.17603}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1707739646

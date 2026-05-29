@@ -8,7 +8,7 @@ public class GameEconomy : MonoBehaviour
     [SerializeField] private int startingAttackBudget = 200;
 
     [Header("Round Growth")]
-    [SerializeField] private int attackBudgetIncreasePerRound = 50;
+    [SerializeField] private int attackBudgetIncreasePerRound = 80;
 
     public int Gold { get; private set; }
     public int AttackBudget { get; private set; }

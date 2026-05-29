@@ -80,7 +80,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 20
+  m_SortingOrder: 10
   m_MaskInteraction: 0
   m_Sprite: {fileID: 1598061926268173818, guid: f202e235ded87b34493090872dffe7ec, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -105,3 +105,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBase
   towerData: {fileID: 11400000, guid: c3d304a8e5bfc714589151d5fc3ac5a8, type: 2}
+  towerSprite: {fileID: 0}

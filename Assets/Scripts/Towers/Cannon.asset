@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerData
   towerName: Cannon
   cost: 200
+  maxCount: 0
   range: 5
-  cooldown: 2
-  damage: 80
+  cooldown: 3.3
+  damage: 40
   projectileSpeed: 8
   attackMode: 0
   targetMode: 0

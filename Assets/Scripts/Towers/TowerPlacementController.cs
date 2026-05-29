@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -5,6 +6,8 @@ using UnityEngine.InputSystem;
 
 public class TowerPlacementController : MonoBehaviour
 {
+    public event Action TowerStateChanged;
+
     [Header("References")]
     [SerializeField] private Camera worldCamera;
     [SerializeField] private GridManager gridManager;
@@ -28,6 +31,7 @@ public class TowerPlacementController : MonoBehaviour
 
     private readonly Dictionary<Vector2Int, PlacedTowerInfo> placedTowers = new();
     private readonly HashSet<Vector2Int> occupiedCells = new();
+    private readonly Dictionary<TowerData, int> placedTowerCounts = new();
 
     public TowerData SelectedTower { get; private set; }
     public TowerData DefaultTower => defaultTower;
@@ -68,17 +72,21 @@ public class TowerPlacementController : MonoBehaviour
     public void SelectTower(TowerData towerData)
     {
         if (towerData == null) return;
+
         SelectedTower = towerData;
+        NotifyTowerStateChanged();
     }
 
     public void ClearSelection()
     {
         SelectedTower = defaultTower;
+        NotifyTowerStateChanged();
     }
 
     public bool TryPlaceTowerAtMouse()
     {
         TowerData towerData = ActiveTowerData;
+
         if (towerData == null || worldCamera == null || gridManager == null || towerData.towerPrefab == null)
             return false;
 
@@ -86,8 +94,8 @@ public class TowerPlacementController : MonoBehaviour
         Vector3 worldPos = worldCamera.ScreenToWorldPoint(
             new Vector3(screenPos.x, screenPos.y, -worldCamera.transform.position.z)
         );
-        worldPos.z = 0f;
 
+        worldPos.z = 0f;
         Vector2Int cell = gridManager.WorldToGrid(worldPos);
         return TryPlaceTower(cell, towerData);
     }
@@ -100,13 +108,19 @@ public class TowerPlacementController : MonoBehaviour
         if (!gridManager.IsInsideGrid(cell)) return false;
         if (gridManager.IsPathCell(cell)) return false;
         if (occupiedCells.Contains(cell)) return false;
+
+        if (HasReachedTowerLimit(towerData)) return false;
+
         if (economy != null && !economy.SpendGold(towerData.cost)) return false;
 
         Vector3 worldPos = gridManager.GridToWorld(cell);
         TowerBase tower = Instantiate(towerData.towerPrefab, worldPos, Quaternion.identity, towerRoot);
+
         tower.Initialize(towerData);
 
         occupiedCells.Add(cell);
+        IncrementTowerCount(towerData);
+
         placedTowers[cell] = new PlacedTowerInfo
         {
             cell = cell,
@@ -117,6 +131,7 @@ public class TowerPlacementController : MonoBehaviour
         if (combatFeedback != null)
             combatFeedback.PlayTowerPlace();
 
+        NotifyTowerStateChanged();
         return true;
     }
 
@@ -126,7 +141,9 @@ public class TowerPlacementController : MonoBehaviour
         if (!gridManager.IsInsideGrid(cell)) return false;
         if (gridManager.IsPathCell(cell)) return false;
         if (occupiedCells.Contains(cell)) return false;
+        if (HasReachedTowerLimit(towerData)) return false;
         if (economy != null && !economy.CanSpendGold(towerData.cost)) return false;
+
         return true;
     }
 
@@ -143,6 +160,32 @@ public class TowerPlacementController : MonoBehaviour
     public void ResetForNewGame()
     {
         ClearPlacedTowersInternal(refund: false, ignorePhaseCheck: true);
+    }
+
+    public int GetPlacedTowerCount(TowerData towerData)
+    {
+        if (towerData == null) return 0;
+        return placedTowerCounts.TryGetValue(towerData, out int count) ? count : 0;
+    }
+
+    public bool HasReachedTowerLimit(TowerData towerData)
+    {
+        if (towerData == null) return false;
+        if (towerData.maxCount <= 0) return false;
+        return GetPlacedTowerCount(towerData) >= towerData.maxCount;
+    }
+
+    private void IncrementTowerCount(TowerData towerData)
+    {
+        if (towerData == null) return;
+
+        placedTowerCounts.TryGetValue(towerData, out int count);
+        placedTowerCounts[towerData] = count + 1;
+    }
+
+    private void NotifyTowerStateChanged()
+    {
+        TowerStateChanged?.Invoke();
     }
 
     private bool ClearPlacedTowersInternal(bool refund, bool ignorePhaseCheck)
@@ -163,11 +206,14 @@ public class TowerPlacementController : MonoBehaviour
 
         placedTowers.Clear();
         occupiedCells.Clear();
+        placedTowerCounts.Clear();
+
         SelectedTower = defaultTower;
 
         if (refund && economy != null && refundAmount > 0)
             economy.AddGold(refundAmount);
 
+        NotifyTowerStateChanged();
         return true;
     }
 }

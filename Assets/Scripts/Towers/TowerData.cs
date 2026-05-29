@@ -9,6 +9,10 @@ public class TowerData : ScriptableObject
     [Header("Economy")]
     [Min(0)] public int cost = 100;
 
+    [Header("Limits")]
+    [Tooltip("Maximum number of towers of this type that can be placed at the same time. Use 0 for unlimited.")]
+    [Min(0)] public int maxCount = 0;
+
     [Header("Combat")]
     [Min(0.1f)] public float range = 3f;
     [Min(0.05f)] public float cooldown = 1f;
@@ -28,5 +32,5 @@ public class TowerData : ScriptableObject
     public GameObject projectilePrefab;
 
     [Header("Audio")]
-    public AudioClip attackClip; 
+    public AudioClip attackClip;
 }

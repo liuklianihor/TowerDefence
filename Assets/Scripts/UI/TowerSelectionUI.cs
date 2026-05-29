@@ -25,17 +25,40 @@ public class TowerSelectionUI : MonoBehaviour
     private void Awake()
     {
         WireButtons();
+        SubscribeToPlacementEvents();
         RefreshSelectionText();
     }
 
     private void OnEnable()
     {
+        SubscribeToPlacementEvents();
         RefreshSelectionText();
+    }
+
+    private void OnDisable()
+    {
+        UnsubscribeFromPlacementEvents();
     }
 
     private void OnDestroy()
     {
+        UnsubscribeFromPlacementEvents();
         UnwireButtons();
+    }
+
+    private void SubscribeToPlacementEvents()
+    {
+        if (placementController == null) return;
+
+        placementController.TowerStateChanged -= RefreshSelectionText;
+        placementController.TowerStateChanged += RefreshSelectionText;
+    }
+
+    private void UnsubscribeFromPlacementEvents()
+    {
+        if (placementController == null) return;
+
+        placementController.TowerStateChanged -= RefreshSelectionText;
     }
 
     private void WireButtons()
@@ -93,6 +116,13 @@ public class TowerSelectionUI : MonoBehaviour
             return;
         }
 
-        selectedTowerText.text = $"Selected: {active.towerName}  |  Cost: {active.cost}";
+        string countText = "∞";
+        if (placementController != null)
+        {
+            int count = placementController.GetPlacedTowerCount(active);
+            countText = active.maxCount > 0 ? $"{count}/{active.maxCount}" : "∞";
+        }
+
+        selectedTowerText.text = $"Selected: {active.towerName} | Cost: {active.cost} | Count: {countText}";
     }
 }

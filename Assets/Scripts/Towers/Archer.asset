@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerData
   towerName: Archer
   cost: 100
+  maxCount: 3
   range: 3.5
   cooldown: 0.7
-  damage: 35
+  damage: 23
   projectileSpeed: 8
   attackMode: 0
   targetMode: 0

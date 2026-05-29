@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerData
   towerName: Freezer
   cost: 120
+  maxCount: 0
   range: 3
   cooldown: 1
-  damage: 27
+  damage: 1
   projectileSpeed: 8
   attackMode: 2
   targetMode: 0

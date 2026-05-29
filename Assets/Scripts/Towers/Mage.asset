@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerData
   towerName: Mage
   cost: 150
+  maxCount: 2
   range: 2.5
-  cooldown: 1.2
-  damage: 40
+  cooldown: 2
+  damage: 13
   projectileSpeed: 8
   attackMode: 1
   targetMode: 0
