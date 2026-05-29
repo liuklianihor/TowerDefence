@@ -1665,7 +1665,7 @@ MonoBehaviour:
   gridManager: {fileID: 2119273498}
   economy: {fileID: 557681376}
   gameStateManager: {fileID: 557681377}
-  combatFeedback: {fileID: 0}
+  combatFeedback: {fileID: 1491181023}
   defaultTower: {fileID: 11400000, guid: 6376b0abf8d30204c8c3bb0ca1b733b8, type: 2}
   towerRoot: {fileID: 794704223}
   ignoreClicksOverUI: 1
@@ -1719,7 +1719,7 @@ MonoBehaviour:
   enemySpawner: {fileID: 1180081269}
   waveComposer: {fileID: 557681375}
   towerPlacementController: {fileID: 557681373}
-  combatFeedback: {fileID: 0}
+  combatFeedback: {fileID: 1491181023}
   spawnInterval: 1.2
   maxEnemiesPerWave: 50
 --- !u!4 &557681378
