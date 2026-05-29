@@ -66,17 +66,34 @@ public class GameHUD : MonoBehaviour
     private void Update()
     {
         if (baseHealth == null)
+        {
             TryBindBase();
+        }
 
         RefreshBaseHealth();
     }
 
     private void ResolveReferences()
     {
-        if (gameStateManager == null) gameStateManager = FindFirstObjectByType<GameStateManager>();
-        if (economy == null) economy = FindFirstObjectByType<GameEconomy>();
-        if (towerPlacementController == null) towerPlacementController = FindFirstObjectByType<TowerPlacementController>();
-        if (baseHealth == null) baseHealth = FindFirstObjectByType<BaseHealth>();
+        if (gameStateManager == null)
+        {
+            gameStateManager = FindFirstObjectByType<GameStateManager>();
+        }
+
+        if (economy == null)
+        {
+            economy = FindFirstObjectByType<GameEconomy>();
+        }
+
+        if (towerPlacementController == null)
+        {
+            towerPlacementController = FindFirstObjectByType<TowerPlacementController>();
+        }
+
+        if (baseHealth == null)
+        {
+            baseHealth = FindFirstObjectByType<BaseHealth>();
+        }
     }
 
     private void WireButtons()
@@ -91,6 +108,7 @@ public class GameHUD : MonoBehaviour
         {
             restartButton.onClick.RemoveListener(OnRestartPressed);
             restartButton.onClick.AddListener(OnRestartPressed);
+            restartButton.interactable = true;
         }
 
         if (clearSelectionButton != null)
@@ -116,7 +134,9 @@ public class GameHUD : MonoBehaviour
         }
 
         if (baseHealth != null)
+        {
             baseHealth.OnHealthChanged += OnBaseHealthChanged;
+        }
     }
 
     private void Unsubscribe()
@@ -135,7 +155,9 @@ public class GameHUD : MonoBehaviour
         }
 
         if (baseHealth != null)
+        {
             baseHealth.OnHealthChanged -= OnBaseHealthChanged;
+        }
     }
 
     public void BindBase(BaseHealth newBaseHealth)
@@ -150,7 +172,9 @@ public class GameHUD : MonoBehaviour
         baseHealth = newBaseHealth;
 
         if (baseHealth != null)
+        {
             baseHealth.OnHealthChanged += OnBaseHealthChanged;
+        }
 
         RefreshBaseHealth();
     }
@@ -158,16 +182,24 @@ public class GameHUD : MonoBehaviour
     private void UnbindBase()
     {
         if (baseHealth != null)
+        {
             baseHealth.OnHealthChanged -= OnBaseHealthChanged;
+        }
     }
 
     private void TryBindBase()
     {
-        if (baseHealth != null) return;
+        if (baseHealth != null)
+        {
+            return;
+        }
 
         baseHealth = FindFirstObjectByType<BaseHealth>();
+
         if (baseHealth != null)
+        {
             baseHealth.OnHealthChanged += OnBaseHealthChanged;
+        }
     }
 
     private void RefreshAll()
@@ -190,63 +222,95 @@ public class GameHUD : MonoBehaviour
     private void OnGoldChanged(int gold, int startingGold)
     {
         if (goldValueText != null)
+        {
             goldValueText.text = gold.ToString();
+        }
     }
 
     private void OnAttackBudgetChanged(int budget, int startingBudget)
     {
         if (attackBudgetValueText != null)
+        {
             attackBudgetValueText.text = budget.ToString();
+        }
     }
 
     private void OnRoundChanged(int currentRound, int totalRounds)
     {
         if (roundValueText != null)
+        {
             roundValueText.text = $"{currentRound}/{totalRounds}";
+        }
     }
 
     private void OnPhaseChanged(GamePhase phase)
     {
         if (phaseValueText != null)
+        {
             phaseValueText.text = phase.ToString();
+        }
 
         if (startBattleButton != null)
+        {
             startBattleButton.interactable = phase == GamePhase.Preparation;
+        }
 
         bool showGameOver = phase == GamePhase.GameOver;
 
         if (restartButton != null)
+        {
             restartButton.gameObject.SetActive(showGameOver);
+            restartButton.interactable = showGameOver;
+            restartButton.transform.SetAsLastSibling();
+        }
 
         if (gameOverPanel != null)
+        {
             gameOverPanel.SetActive(showGameOver);
+        }
 
         if (!showGameOver)
+        {
             HideGameOverImages();
+        }
     }
 
     private void OnGameEnded(bool defenderWon)
     {
         if (victoryImage != null)
+        {
             victoryImage.gameObject.SetActive(defenderWon);
+        }
 
         if (defeatImage != null)
+        {
             defeatImage.gameObject.SetActive(!defenderWon);
+        }
 
         if (gameOverPanel != null)
+        {
             gameOverPanel.SetActive(true);
+        }
 
         if (restartButton != null)
+        {
             restartButton.gameObject.SetActive(true);
+            restartButton.interactable = true;
+            restartButton.transform.SetAsLastSibling();
+        }
     }
 
     private void HideGameOverImages()
     {
         if (victoryImage != null)
+        {
             victoryImage.gameObject.SetActive(false);
+        }
 
         if (defeatImage != null)
+        {
             defeatImage.gameObject.SetActive(false);
+        }
     }
 
     private void OnBaseHealthChanged(int currentHp, int maxHp)
@@ -254,13 +318,17 @@ public class GameHUD : MonoBehaviour
         UpdateBaseHpText(currentHp, maxHp);
 
         if (currentHp <= 0 && gameStateManager != null && gameStateManager.CurrentPhase != GamePhase.GameOver)
+        {
             gameStateManager.GameOver(false);
+        }
     }
 
     private void RefreshBaseHealth()
     {
         if (baseHealth == null || baseHpValueText == null)
+        {
             return;
+        }
 
         UpdateBaseHpText(baseHealth.CurrentHP, baseHealth.MaxHP);
     }
@@ -268,14 +336,19 @@ public class GameHUD : MonoBehaviour
     private void UpdateBaseHpText(int currentHp, int maxHp)
     {
         if (baseHpValueText == null)
+        {
             return;
+        }
 
         baseHpValueText.text = $"{Mathf.Max(0, currentHp)}/{Mathf.Max(1, maxHp)}";
     }
 
     public void OnStartBattlePressed()
     {
-        gameStateManager?.StartBattle();
+        if (gameStateManager != null)
+        {
+            gameStateManager.StartBattle();
+        }
     }
 
     public void OnRestartPressed()
@@ -288,7 +361,9 @@ public class GameHUD : MonoBehaviour
     public void OnClearSelectionPressed()
     {
         if (towerPlacementController != null)
+        {
             towerPlacementController.ClearPlacedTowersAndRefund();
+        }
 
         RefreshAll();
     }
